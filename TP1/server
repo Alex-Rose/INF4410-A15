@@ -3,9 +3,10 @@ basepath=$(pwd)
 popd > /dev/null
 
 # Option a ajustet et ajouter pour lancer un serveur a distance.
-#  -Djava.rmi.server.hostname=mycomputer.example.com \
+#  -Djava.rmi.server.hostname=orion.aep.polymtl.ca \
 
 java -cp $basepath/server.jar:$basepath/shared.jar \
   -Djava.rmi.server.codebase=file:$basepath/shared.jar \
   -Djava.security.policy=$basepath/policy \
+  -Djava.rmi.server.hostname=orion.aep.polymtl.ca \
   ca.polymtl.inf4402.tp1.server.Server

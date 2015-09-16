@@ -85,18 +85,42 @@ public class Benchmark {
         remoteSize += size;
     }
 
+    public Result getResult(String type){
+        Result result = new Result();
+        if (type.equals("normal")){
+            result.size = (int)normalSize / normalCount;
+            result.time = normalTotal / normalCount;
+        }
+        else if (type.equals("local")){
+            result.size = (int)localSize / localCount;
+            result.time = localTotal / localCount;
+        }
+        else if (type.equals("remote")){
+            result.size = (int)remoteSize / remoteCount;
+            result.time = remoteTotal / remoteCount;
+        }
+
+        return result;
+    }
+
     public void flushAndDelete(){
+        instance = null;
+
         normalWriter.interrupt();
         localWriter.interrupt();
         remoteWriter.interrupt();
 
-        System.out.println("Normal average time : " + normalTotal / normalCount + "ns (" + (float) normalTotal / (float) normalCount / 1000000f + " ms)");
-        System.out.println("Local average time : " + localTotal / localCount + "ns (" + (float)localTotal / (float)localCount / 1000000f + " ms)");
-        System.out.println("Remote average time : " + remoteTotal / remoteCount + "ns (" + remoteTotal / remoteCount / 1000000f + " ms)");
+        if (normalCount > 0) {
+            System.out.println("Normal average time : " + normalTotal / normalCount + " ns (" + (float) normalTotal / (float) normalCount / 1000000f + " ms)");
+        }
+        if (localCount > 0) {
+            System.out.println("Local average time : " + localTotal / localCount + " ns (" + (float) localTotal / (float) localCount / 1000000f + " ms)");
+        }
+        if (remoteCount > 0) {
+            System.out.println("Remote average time : " + remoteTotal / remoteCount + " ns (" + remoteTotal / remoteCount / 1000000f + " ms)");
+        }
 
         System.out.println("Total data sent : " + remoteSize / 1000 + " KB");
-
-        instance = null;
     }
 
     private String fileNameBuilder(String folder, String name, long timestamp){
@@ -167,6 +191,10 @@ public class Benchmark {
         private Long time;
         private int size;
         private int result;
+
+        public Result(){
+
+        }
 
         public Result(Long time, int size, int result) {
             this.time = time;

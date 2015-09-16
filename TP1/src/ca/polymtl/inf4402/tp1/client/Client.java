@@ -1,5 +1,8 @@
 package ca.polymtl.inf4402.tp1.client;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -17,28 +20,28 @@ public class Client {
 			distantHostname = args[0];
 		}
 
-        Boolean benchmark = false;
+        Boolean isBenchmark = false;
 
         if (args.length > 1) {
-            benchmark = args[1].toLowerCase().equals("benchmark");
+            isBenchmark = args[1].toLowerCase().equals("benchmark");
         }
 
 		Client client = new Client(distantHostname);
-        client.benchmark = benchmark;
+        client.isBenchmark = isBenchmark;
 
-        if (benchmark) {
-            client.benchmark(100, 1000);
+        if (isBenchmark) {
+            client.initBenchmark();
         }
 
         Benchmark.getInstance().flushAndDelete();
 	}
 
-	FakeServer localServer = null; // Pour tester la latence d'un appel de
+    FakeServer localServer = null; // Pour tester la latence d'un appel de
 									// fonction normal.
 	private ServerInterface localServerStub = null;
 	private ServerInterface distantServerStub = null;
     private Boolean verbose = true;
-    public Boolean benchmark = false;
+    private Boolean isBenchmark = false;
 
 	public Client(String distantServerHostname) {
 		super();
@@ -54,6 +57,65 @@ public class Client {
 			distantServerStub = loadServerStub(distantServerHostname);
 		}
 	}
+
+    private void initBenchmark() {
+        this.verbose = false;
+
+        Benchmark.Result[][] results = new Benchmark.Result[3][8];
+
+        for (int i = 1; i <= 8; i++) {
+            int hardcap = 100000000;
+            int size = (int)Math.pow(10, i);
+            int cnt = 100;
+            if (size * cnt > hardcap){
+                cnt /= 10;
+            }
+
+            if (size * cnt > hardcap){
+                cnt /= 10;
+            }
+
+            System.out.println(System.lineSeparator() + cnt + " iterations at 10^" + i + " bytes");
+            benchmark(cnt, size);
+
+            Benchmark benchmark = Benchmark.getInstance();
+            results[0][i-1] = benchmark.getResult("normal");
+            results[1][i-1] = benchmark.getResult("local");
+            results[2][i-1] = benchmark.getResult("remote");
+            benchmark.flushAndDelete();
+        }
+
+        saveResults(results);
+    }
+
+    private void saveResults(Benchmark.Result[][] results){
+        try {
+            String resultsDir = "results";
+            File folder = new File(resultsDir);
+
+            if (!folder.exists()){
+                folder.mkdir();
+            }
+
+            long timestamp = System.currentTimeMillis() / 1000L;
+
+            FileWriter file = new FileWriter("results/averages_" + timestamp + ".csv");
+            file.write("Size,Normal,Local,Remote" + System.lineSeparator());
+
+            for (int i = 0; i < results[0].length; i++){
+                file.write(results[0][i].getSize() + ","
+                        + results[0][i].getTime() + ","
+                        + results[1][i].getTime() + ","
+                        + results[2][i].getTime() +
+                        System.lineSeparator());
+            }
+
+            file.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void benchmark(int nb, int size){
         byte[] data = getRandomData(size);
@@ -112,7 +174,7 @@ public class Client {
             System.out.println("Résultat appel normal: " + 0);
         }
 
-        if (benchmark) {
+        if (isBenchmark) {
             Benchmark.getInstance().writeNormalAsync(end - start, data.length, 0);
         }
 	}
@@ -128,7 +190,7 @@ public class Client {
                         + " ns");
                 System.out.println("Résultat appel RMI local: " + 0);
             }
-            if (benchmark) {
+            if (isBenchmark) {
                 Benchmark.getInstance().writeLocalAsync(end - start, data.length, 0);
             }
 		} catch (RemoteException e) {
@@ -148,7 +210,7 @@ public class Client {
                 System.out.println("Résultat appel RMI distant: " + 0);
             }
 
-            if (benchmark) {
+            if (isBenchmark) {
                 Benchmark.getInstance().writeRemoteAsync(end - start, data.length, 0);
             }
 		} catch (RemoteException e) {

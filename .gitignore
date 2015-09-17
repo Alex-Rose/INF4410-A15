@@ -16,3 +16,4 @@ hs_err_pid*
 */.idea
 *.iml
 TP1/results/*
+TP1/.uid

@@ -1,8 +1,6 @@
 package ca.polymtl.inf4402.tp1.client;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -31,9 +29,12 @@ public class Client {
 
         if (isBenchmark) {
             client.initBenchmark();
+            Benchmark.getInstance().flushAndDelete();
+        }
+        else{
+            client.test();
         }
 
-        Benchmark.getInstance().flushAndDelete();
 	}
 
     FakeServer localServer = null; // Pour tester la latence d'un appel de
@@ -217,4 +218,49 @@ public class Client {
 			System.out.println("Erreur: " + e.getMessage());
 		}
 	}
+
+    private void test(){
+        try {
+            int uid = -1;
+            File file = new File(".uid");
+
+            if (!file.exists()){
+                uid = localServerStub.generateClientId();
+                FileWriter writer = new FileWriter(file);
+                writer.write(Integer.toString(uid));
+                writer.close();
+            }
+            else {
+                FileReader reader = new FileReader(file);
+                BufferedReader br = new BufferedReader(reader);
+                String ln = br.readLine();
+                uid = Integer.parseInt(ln);
+                br.close();
+            }
+
+            System.out.println("Client Id : " + uid);
+
+            localServerStub.create("New File");
+
+        } catch (RemoteException e) {
+            System.err.println(e.getCause().getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            System.out.println(".uid file corrupted. Please run again.");
+            int uid = 0;
+            try {
+                uid = localServerStub.generateClientId();
+            } catch (RemoteException e1) {
+                e1.printStackTrace();
+            }
+            try {
+                FileWriter writer = new FileWriter(".uid");
+                writer.write(Integer.toString(uid));
+                writer.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+    }
 }

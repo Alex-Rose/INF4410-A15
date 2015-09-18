@@ -22,6 +22,7 @@ public class Server implements ServerInterface {
 
         files = new HashMap<String, RemoteFile>();
         fileList = new LinkedList<String>();
+        lockTable = new HashMap<String, Integer>();
 	}
 
     protected HashMap<String, RemoteFile> files;
@@ -100,8 +101,8 @@ public class Server implements ServerInterface {
 	}
 
 	@Override
-	public void syncLocalDir() throws RemoteException {
-
+	public HashMap<String, RemoteFile> syncLocalDir() throws RemoteException {
+        return files;
 	}
 
 	@Override
@@ -123,7 +124,7 @@ public class Server implements ServerInterface {
 	@Override
 	public RemoteFile lock(String name, int clientId, byte[] checksum) throws RemoteException {
 		RemoteFile file = get(name, checksum);
-        if (file != null) {
+            if (file != null) {
             if (!lockTable.containsKey(name)) {
                 lockTable.put(name, clientId);
             }
@@ -137,13 +138,25 @@ public class Server implements ServerInterface {
 
 	@Override
 	public boolean push(String name, byte[] data, int clientId) throws RemoteException {
-        RemoteFile file = getFileIfExists(name);
+        RemoteFile remoteFile = getFileIfExists(name);
 
-        if (file != null) {
+        if (remoteFile != null) {
             if (lockTable.containsKey(name)) {
                 if (lockTable.get(name) == clientId) {
-                    fileList.add(file.getName());
+                    ServerFile file = (ServerFile)remoteFile;
+                    file.setContent(data);
+
+                    if (!fileList.contains(file.getName())) {
+                        fileList.add(file.getName());
+                    }
+
+                    if (files.containsKey(file.getName())){
+                        files.remove(file.getName());
+                    }
+
                     files.put(file.getName(), file);
+
+                    lockTable.remove(name);
                 }
                 else{
                     throw new RemoteException("File locked by another user.");

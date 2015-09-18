@@ -2,13 +2,14 @@ package ca.polymtl.inf4402.tp1.server;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
 
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by Alexandre on 9/16/2015.
  */
-public class ServerFile implements RemoteFile {
+public class ServerFile implements RemoteFile, Serializable {
 
     protected String name;
     protected byte[] content;
@@ -54,5 +55,10 @@ public class ServerFile implements RemoteFile {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public int hashCode(){
+        return name.hashCode() * checksum.hashCode();
     }
 }

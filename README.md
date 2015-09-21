@@ -22,3 +22,13 @@ Server hostname can be defined using the following
 export _JAVA_OPTIONS="-Djava.rmi.server.hostname=132.207.4.36
 ```
 This can also be added to the server bash script
+
+### Building
+Build with **ant**, which uses the *build.xml* file. 
+
+### Windows particularities
+To launch the processes under windows, use the scripts available as some extra JVM configuration is required. 
+
+Before launching the server, run *start_rmiretistry.cmd* to avoid *ClassNotFound* exception.
+
+When building in Windows using **ant**, the *jar* files might not work. Using the scripts bypasses these issues. Launching from an IDE also works, as long as the run configurations are properly configured.  

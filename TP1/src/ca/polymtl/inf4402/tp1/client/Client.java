@@ -9,6 +9,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Random;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
@@ -48,14 +50,21 @@ public class Client {
             else {
                 try {
                     Client client = new Client();
-                    Method method = client.getClass().getMethod(action, String.class);
-                    method.invoke(client, value);
+
+                    if (value == null) {
+                        Method method = client.getClass().getMethod(action);
+                        method.invoke(client);
+                    }
+                    else {
+                        Method method = client.getClass().getMethod(action, String.class);
+                        method.invoke(client, value);
+                    }
                 } catch (SecurityException e) {
                     e.printStackTrace();
                 } catch (NoSuchMethodException e) {
                     printHelp();
                 } catch (InvocationTargetException e) {
-                    e.printStackTrace();
+                    System.err.println(e.getTargetException().getMessage());
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -120,6 +129,8 @@ public class Client {
 		}
 
 		serverStub = loadServerStub();
+
+        setClientID();
 	}
 
     private void setClientID(){
@@ -128,7 +139,7 @@ public class Client {
             File file = new File(".uid");
 
             if (!file.exists()) {
-                uid = localServerStub.generateClientId();
+                uid = serverStub.generateClientId();
                 FileWriter writer = new FileWriter(file);
                 writer.write(Integer.toString(uid));
                 writer.close();
@@ -298,6 +309,10 @@ public class Client {
 		return stub;
 	}
 
+    /**
+     * Method used by benchmark
+     * @param data : data sent to server
+     */
 	private void appelNormal(byte[] data) {
 		long start = System.nanoTime();
 		localServer.execute(data);
@@ -314,6 +329,10 @@ public class Client {
         }
 	}
 
+    /**
+     * Method used by benchmark
+     * @param data : data sent to server
+     */
 	private void appelRMILocal(byte[] data) {
 		try {
 			long start = System.nanoTime();
@@ -333,6 +352,10 @@ public class Client {
 		}
 	}
 
+    /**
+     * Method used by benchmark
+     * @param data : data sent to server
+     */
 	private void appelRMIDistant(byte[] data) {
 		try {
 			long start = System.nanoTime();
@@ -353,6 +376,47 @@ public class Client {
 		}
 	}
 
+    /**
+     * Create an empty file on the server
+     * @param name : file name
+     * @throws RemoteException
+     */
+    public void create(String name) throws RemoteException{
+        serverStub.create(name);
+    }
+
+    /**
+     * Print remote file list to system output
+     * @throws RemoteException
+     */
+    public void list() throws RemoteException{
+        LinkedList<String> list = serverStub.list();
+        for (Iterator<String> i = list.iterator(); i.hasNext();){
+            System.out.println(i.next());
+        }
+    }
+
+    public void syncLocalDir() throws RemoteException{
+
+    }
+
+    public void get(String name) throws RemoteException{
+
+    }
+
+    public void lock(String name) throws RemoteException{
+
+    }
+
+    public void push(String name) throws RemoteException{
+
+    }
+
+    /**
+     * Run various tests. Can be used to trigger automated testing.
+     * This method will simulate a few actions
+     * @param filename : File to be used in tests
+     */
     public void test(String filename){
         try {
             int uid = -1;

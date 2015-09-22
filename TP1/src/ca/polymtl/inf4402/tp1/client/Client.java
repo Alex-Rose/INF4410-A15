@@ -23,11 +23,9 @@ import javafx.util.Pair;
  *     Cette classe contient le main de l'application client.
  *     On y retrouve aussi les différents appels des fonctionnalités
  *     du logiciel
- * </p>
  * <p>
  *     Le code pour les mesures de performance (benchmark) se trouve aussi
  *     dans cette classe.
- * </p>
  */
 public class Client {
 	public static void main(String[] args) {
@@ -39,10 +37,7 @@ public class Client {
         if (action != null){
 
             if (action.equals("benchmark")){
-                Client client = new Client();
-                client.isBenchmark = true;
-                client.initBenchmark();
-                Benchmark.getInstance().flushAndDelete();
+                FakeClient client = new FakeClient(value);
             }
             else if (action.equals("setServer")){
                 setServer(value);
@@ -107,7 +102,6 @@ public class Client {
         System.out.println("    local          : Use a server on the localmachine ");
         System.out.println("    [hostname]     : Use the URI to resolve remote host");
     }
-
 
     FakeServer localServer = null; // Pour tester la latence d'un appel de fonction normal
 	private ServerInterface serverStub = null;
@@ -186,93 +180,6 @@ public class Client {
         }
     }
 
-    private void initBenchmark() {
-        this.verbose = false;
-
-        Benchmark.Result[][] results = new Benchmark.Result[3][8];
-
-        for (int i = 1; i <= 8; i++) {
-            int hardcap = 100000000;
-            int size = (int)Math.pow(10, i);
-            int cnt = 100;
-            if (size * cnt > hardcap){
-                cnt /= 10;
-            }
-
-            if (size * cnt > hardcap){
-                cnt /= 10;
-            }
-
-            System.out.println(System.lineSeparator() + cnt + " iterations at 10^" + i + " bytes");
-            benchmark(cnt, size);
-
-            Benchmark benchmark = Benchmark.getInstance();
-            results[0][i-1] = benchmark.getResult("normal");
-            results[1][i-1] = benchmark.getResult("local");
-            results[2][i-1] = benchmark.getResult("remote");
-            benchmark.flushAndDelete();
-        }
-
-        saveResults(results);
-    }
-
-    private void saveResults(Benchmark.Result[][] results){
-        try {
-            String resultsDir = "results";
-            File folder = new File(resultsDir);
-
-            if (!folder.exists()){
-                folder.mkdir();
-            }
-
-            long timestamp = System.currentTimeMillis() / 1000L;
-
-            FileWriter file = new FileWriter("results/averages_" + timestamp + ".csv");
-            file.write("Size,Normal,Local,Remote" + System.lineSeparator());
-
-            for (int i = 0; i < results[0].length; i++){
-                file.write(results[0][i].getSize() + ","
-                        + results[0][i].getTime() + ","
-                        + results[1][i].getTime() + ","
-                        + results[2][i].getTime() +
-                        System.lineSeparator());
-            }
-
-            file.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void benchmark(int nb, int size){
-        byte[] data = getRandomData(size);
-
-        for (int i = 0; i < nb; i++){
-            appelNormal(data);
-        }
-
-        if (localServerStub != null) {
-            for (int i = 0; i < nb; i++) {
-                appelRMILocal(data);
-            }
-        }
-
-        if (distantServerStub != null) {
-            for (int i = 0; i < nb; i++) {
-                appelRMIDistant(data);
-            }
-        }
-    }
-
-    private byte[] getRandomData(int size){
-        byte[] data = new byte[size];
-        Random rand = new Random();
-        rand.nextBytes(data);
-
-        return data;
-    }
-
 	private ServerInterface loadServerStub() {
 		ServerInterface stub = null;
         String hostname = null;
@@ -310,75 +217,8 @@ public class Client {
 	}
 
     /**
-     * Method used by benchmark
-     * @param data : data sent to server
-     */
-	private void appelNormal(byte[] data) {
-		long start = System.nanoTime();
-		localServer.execute(data);
-		long end = System.nanoTime();
-
-        if (verbose) {
-            System.out.println("Temps écoulé appel normal: " + (end - start)
-                    + " ns");
-            System.out.println("Résultat appel normal: " + 0);
-        }
-
-        if (isBenchmark) {
-            Benchmark.getInstance().writeNormalAsync(end - start, data.length, 0);
-        }
-	}
-
-    /**
-     * Method used by benchmark
-     * @param data : data sent to server
-     */
-	private void appelRMILocal(byte[] data) {
-		try {
-			long start = System.nanoTime();
-			localServerStub.execute(data);
-			long end = System.nanoTime();
-
-            if (verbose) {
-                System.out.println("Temps écoulé appel RMI local: " + (end - start)
-                        + " ns");
-                System.out.println("Résultat appel RMI local: " + 0);
-            }
-            if (isBenchmark) {
-                Benchmark.getInstance().writeLocalAsync(end - start, data.length, 0);
-            }
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}
-
-    /**
-     * Method used by benchmark
-     * @param data : data sent to server
-     */
-	private void appelRMIDistant(byte[] data) {
-		try {
-			long start = System.nanoTime();
-			distantServerStub.execute(data);
-			long end = System.nanoTime();
-
-            if (verbose) {
-                System.out.println("Temps écoulé appel RMI distant: "
-                        + (end - start) + " ns");
-                System.out.println("Résultat appel RMI distant: " + 0);
-            }
-
-            if (isBenchmark) {
-                Benchmark.getInstance().writeRemoteAsync(end - start, data.length, 0);
-            }
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}
-
-    /**
      * Create an empty file on the server
-     * @param name : file name
+     * @param name file name
      * @throws RemoteException
      */
     public void create(String name) throws RemoteException{
@@ -415,7 +255,7 @@ public class Client {
     /**
      * Run various tests. Can be used to trigger automated testing.
      * This method will simulate a few actions
-     * @param filename : File to be used in tests
+     * @param filename File to be used in tests
      */
     public void test(String filename){
         try {

@@ -105,12 +105,22 @@ public class Server implements ServerInterface {
         return files;
 	}
 
+    /**
+     * Download the file from server if different
+     * @param name Name of the file to get
+     * @param checksum Checksum of the local file
+     * @return RemoteFile if found and different, null otherwise
+     * @throws RemoteException if file not found
+     */
 	@Override
 	public RemoteFile get(String name, byte[] checksum) throws RemoteException {
 		RemoteFile file = getFileIfExists(name);
         if (file != null){
             if (Arrays.equals(file.getChecksum(), checksum)){
                 file = null;
+            }
+            else {
+                output("Uploaded file to client : " + name);
             }
         }
         else
@@ -124,13 +134,18 @@ public class Server implements ServerInterface {
 	@Override
 	public RemoteFile lock(String name, int clientId, byte[] checksum) throws RemoteException {
 		RemoteFile file = get(name, checksum);
-            if (file != null) {
+        if (file != null) {
             if (!lockTable.containsKey(name)) {
                 lockTable.put(name, clientId);
+                output("Locked file : " + name);
             }
             else{
                 throw new RemoteException("File already locked.");
             }
+        }
+        else
+        {
+            throw new RemoteException("Client file differs from server.");
         }
 
         return file;
@@ -157,6 +172,8 @@ public class Server implements ServerInterface {
                     files.put(file.getName(), file);
 
                     lockTable.remove(name);
+
+                    output("File pushed : " + name);
                 }
                 else{
                     throw new RemoteException("File locked by another user.");

@@ -71,6 +71,11 @@ public class Client {
 
 	}
 
+    /**
+     * Parse CLI arguments.
+     * @param args argument array
+     * @return action, option
+     */
     public static Pair<String, String> parseArguments(String[] args){
         String action = null;
         if (args.length > 0) {
@@ -85,6 +90,9 @@ public class Client {
         return new Pair<String, String>(action, param);
     }
 
+    /**
+     * Print usage to System out
+     */
     public static void printHelp(){
         System.out.println("Client help file \n\n");
         System.out.println("Usage : client action [parameter]\n");
@@ -127,6 +135,10 @@ public class Client {
         setClientID();
 	}
 
+    /**
+     * Get client ID from cached file. If file is not found, get new client ID
+     * from server
+     */
     private void setClientID(){
         try {
             int uid = -1;
@@ -170,6 +182,10 @@ public class Client {
         }
     }
 
+    /**
+     * Cache the connection settings
+     * @param value hostname
+     */
     public static void setServer(String value){
         try {
             FileWriter writer = new FileWriter(".server");
@@ -180,6 +196,11 @@ public class Client {
         }
     }
 
+    /**
+     * Connect to RMI server and get server object handle of type ServerInterface
+     * Server hostname defined by {@link ca.polymtl.inf4402.tp1.client.Client:setServer setServer}
+     * @return ServerInterface
+     */
 	private ServerInterface loadServerStub() {
 		ServerInterface stub = null;
         String hostname = null;
@@ -236,20 +257,65 @@ public class Client {
         }
     }
 
+    /**
+     * Download all file from server.
+     * @throws RemoteException
+     */
     public void syncLocalDir() throws RemoteException{
+        LinkedList<String> list = serverStub.list();
+        for (Iterator<String> i = list.iterator(); i.hasNext();){
+            String name = i.next();
+            System.out.print(name);
 
+            byte[] checksum = FileHelper.getChecksum(name);
+            RemoteFile file = serverStub.get(name, checksum);
+            if (file != null){
+                FileHelper.writeFile(name, file.getContent());
+                System.out.println(" [Downloaded]");
+            }
+            else {
+                System.out.println(" [Cached]");
+            }
+        }
     }
 
+    /**
+     * Download file from server, unless the local version
+     * is up to date.
+     * @param name Path of the find to download from server
+     * @throws RemoteException
+     */
     public void get(String name) throws RemoteException{
-
+        byte[] checksum = FileHelper.getChecksum(name);
+        RemoteFile file = serverStub.get(name, checksum);
+        if (file != null){
+            FileHelper.writeFile(name, file.getContent());
+        }
+        else {
+            System.out.println("Local file already up-to-date");
+        }
     }
 
+    /**
+     * Try to lock file
+     * @param name Path of file to lock
+     * @throws RemoteException if file is already locked or local file out of sync
+     */
     public void lock(String name) throws RemoteException{
-
+        byte[] checksum = FileHelper.getChecksum(name);
+        serverStub.lock(name, uid, checksum);
     }
 
+    /**
+     * Upload file to server
+     * @param name file to upload
+     * @throws RemoteException
+     */
     public void push(String name) throws RemoteException{
-
+        byte[] data = FileHelper.readFile(name);
+        if (data != null){
+            serverStub.push(name, data, uid);
+        }
     }
 
     /**

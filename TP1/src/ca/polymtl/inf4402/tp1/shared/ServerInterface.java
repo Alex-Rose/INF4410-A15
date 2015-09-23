@@ -13,6 +13,14 @@ public interface ServerInterface extends Remote {
     boolean create(String name) throws RemoteException;
     LinkedList<String> list() throws RemoteException;
     HashMap<String, RemoteFile> syncLocalDir() throws RemoteException;
+
+    /**
+     * Download the file from server if different
+     * @param name Name of the file to get
+     * @param checksum Checksum of the local file
+     * @return RemoteFile if found and different, null otherwise
+     * @throws RemoteException if file not found
+     */
     RemoteFile get(String name, byte[] checksum) throws RemoteException;
     RemoteFile lock(String name, int clientId, byte[] checksum) throws RemoteException;
     boolean push(String name, byte[] data, int clientId) throws RemoteException;

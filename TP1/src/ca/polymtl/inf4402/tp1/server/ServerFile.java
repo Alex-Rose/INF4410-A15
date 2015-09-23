@@ -16,10 +16,12 @@ public class ServerFile implements RemoteFile, Serializable {
     protected byte[] checksum;
 
     public ServerFile() {
+        initEmpty();
     }
 
     public ServerFile(String name) {
         this.name = name;
+        initEmpty();
     }
 
     public ServerFile(String name, byte[] content) {
@@ -60,5 +62,10 @@ public class ServerFile implements RemoteFile, Serializable {
     @Override
     public int hashCode(){
         return name.hashCode() * checksum.hashCode();
+    }
+
+    private void initEmpty(){
+        content = new byte[0];
+        checksum = new byte[0];
     }
 }

@@ -198,7 +198,7 @@ public class Client {
 
     /**
      * Connect to RMI server and get server object handle of type ServerInterface
-     * Server hostname defined by {@link ca.polymtl.inf4402.tp1.client.Client:setServer setServer}
+     * Server hostname defined by {@link ca.polymtl.inf4402.tp1.client.Client setServer}
      * @return ServerInterface
      */
 	private ServerInterface loadServerStub() {

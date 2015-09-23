@@ -70,6 +70,11 @@ public class Server implements ServerInterface {
 		return;
 	}
 
+    /**
+     * Generate a new random client ID
+     * @return random client ID
+     * @throws RemoteException
+     */
 	@Override
 	public int generateClientId() throws RemoteException {
         Random r = new Random();
@@ -78,6 +83,12 @@ public class Server implements ServerInterface {
         return id;
 	}
 
+    /**
+     * Create new empty file
+     * @param name file name
+     * @return true if succeeded
+     * @throws RemoteException if file already exists
+     */
     @Override
 	public boolean create(String name) throws RemoteException {
 		boolean result = false;
@@ -95,6 +106,11 @@ public class Server implements ServerInterface {
         return result;
 	}
 
+    /**
+     * Get the file list. Names and attributes only, content is not downloaded
+     * @return file list
+     * @throws RemoteException
+     */
 	@Override
 	public LinkedList<String> list() throws RemoteException {
 		return fileList;
@@ -131,6 +147,14 @@ public class Server implements ServerInterface {
         return file;
 	}
 
+    /**
+     * Lock file on the server if not already locked an file is in sync
+     * @param name file to lock
+     * @param clientId user ID
+     * @param checksum local checksum
+     * @return locked file
+     * @throws RemoteException if file not found or file checksum differs
+     */
 	@Override
 	public RemoteFile lock(String name, int clientId, byte[] checksum) throws RemoteException {
 		RemoteFile file = get(name, checksum);
@@ -151,6 +175,14 @@ public class Server implements ServerInterface {
         return file;
     }
 
+    /**
+     * Upload file to server
+     * @param name file to be uploaded
+     * @param data file content
+     * @param clientId user ID
+     * @return true if succeeded
+     * @throws RemoteException file locked by another user, file not locked, file not found
+     */
 	@Override
 	public boolean push(String name, byte[] data, int clientId) throws RemoteException {
         RemoteFile remoteFile = getFileIfExists(name);

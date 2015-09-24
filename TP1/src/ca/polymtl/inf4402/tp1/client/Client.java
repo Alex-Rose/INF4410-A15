@@ -3,15 +3,15 @@ package ca.polymtl.inf4402.tp1.client;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.*;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
 import ca.polymtl.inf4402.tp1.shared.ServerInterface;
@@ -59,6 +59,7 @@ public class Client {
                 } catch (NoSuchMethodException e) {
                     printHelp();
                 } catch (InvocationTargetException e) {
+                    e.printStackTrace();
                     System.err.println(e.getTargetException().getMessage());
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
@@ -323,64 +324,80 @@ public class Client {
      * This method will simulate a few actions
      * @param filename File to be used in tests
      */
-    public void test(String filename){
+    public void test(String filename) {
+        Random r = new Random();
+        List<String> words = new ArrayList<String>(){{
+            add("Bonjour");
+            add("Monde");
+            add("Hello");
+            add("World");
+            add("!");
+        }};
+        for (int i = 0; i < 1000; i++) {
+            try {
+                switch (r.nextInt(12)){
+                    case 0:
+                        create(filename);
+                        break;
+                    case 1:
+                    case 2:
+                    case 3:
+                        get(filename);
+                        break;
+                    case 4:
+                    case 5:
+                    case 6:
+                        lock(filename);
+                        break;
+                    case 7:
+                    case 8:
+                    case 9:
+                        push(filename);
+                        break;
+                    case 10:
+                        System.out.println("Appending word");
+                        try {
+                            List<String> text = Files.readAllLines(Paths.get(filename));
+                            text.add(words.get(r.nextInt(words.size())));
+                            String finalText = "";
+                            for (Iterator<String> it = text.iterator(); it.hasNext();){
+                                finalText += it.next() + " ";
+                            }
+
+                            Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"));
+                            writer.write(finalText);
+                            writer.close();
+
+                        } catch (IOException e) {
+                            System.err.println(e.getMessage());
+                        }
+
+                        break;
+                    case 11:
+                        System.out.println("Deleting file");
+                        try{
+                            File file = new File(filename);
+                            if (file.exists()){
+                                file.delete();
+                            }
+                        } catch (Exception e) {
+                            System.err.println(e.getMessage());
+                        }
+                        break;
+                    default:
+                        System.out.println("no op.");
+                        break;
+                }
+            } catch (RemoteException e) {
+                System.err.println(e.getCause().getMessage());
+            }
+        }
+
         try {
-            int uid = -1;
-            File file = new File(".uid");
-
-            if (!file.exists()){
-                uid = localServerStub.generateClientId();
-                FileWriter writer = new FileWriter(file);
-                writer.write(Integer.toString(uid));
-                writer.close();
-            }
-            else {
-                FileReader reader = new FileReader(file);
-                BufferedReader br = new BufferedReader(reader);
-                String ln = br.readLine();
-                uid = Integer.parseInt(ln);
-                br.close();
-            }
-
-            System.out.println("Client Id : " + uid);
-
-
-            byte[] data = FileHelper.readFile(filename);
-            byte[] checksum = FileHelper.getChecksum(data);
-
-            serverStub.create(filename);
-            serverStub.lock(filename, uid, new byte[]{-1});
-            serverStub.push(filename, data, uid);
-            RemoteFile rf = serverStub.get(filename, new byte[]{-1});
-            FileHelper.writeFile("output.txt", rf.getContent());
-
-            byte[] data2 = FileHelper.readFile("output.txt");
-            byte[] checksum2 = FileHelper.getChecksum(data2);
-
-            boolean eq = Arrays.equals(data, data2);
-            boolean eq2 = Arrays.equals(checksum, checksum2);
-            boolean eq3 = Arrays.equals(checksum, checksum2);
-
-
+            // If file is locked after last instruction
+            push(filename);
         } catch (RemoteException e) {
-            System.err.println(e.getCause().getMessage());
-        } catch (IOException e) {
             e.printStackTrace();
-        } catch (NumberFormatException e) {
-            System.out.println(".uid file corrupted. Please run again.");
-            int uid = 0;
-            try {
-                uid = serverStub.generateClientId();
-            } catch (RemoteException e1) {
-                e1.printStackTrace();
-            }
-            try {
-                FileWriter writer = new FileWriter(".uid");
-                writer.write(Integer.toString(uid));
-                writer.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
         }
     }
 }

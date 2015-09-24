@@ -23,7 +23,7 @@ public class FileHelper {
         try {
             return Files.readAllBytes(Paths.get(path));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
             return null;
         }
     }

@@ -6,9 +6,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
 import ca.polymtl.inf4402.tp1.shared.ServerInterface;
+import sun.awt.Mutex;
 
 public class Server implements ServerInterface {
 
@@ -20,15 +24,24 @@ public class Server implements ServerInterface {
 	public Server() {
         super();
 
-        files = new HashMap<String, RemoteFile>();
-        fileList = new LinkedList<String>();
-        lockTable = new HashMap<String, Integer>();
-	}
+        files = new ConcurrentHashMap<String, RemoteFile>();
+        fileLock = new ReentrantLock();
 
-    protected HashMap<String, RemoteFile> files;
-    protected HashMap<String, Integer> lockTable;
+        fileList = new LinkedList<String>();
+        fileListLock = new ReentrantLock();
+
+        lockTable = new ConcurrentHashMap<String, Integer>();
+        lockTableLock = new ReentrantLock();
+    }
+
+    protected ConcurrentHashMap<String, RemoteFile> files;
+    protected ConcurrentHashMap<String, Integer> lockTable;
     protected LinkedList<String> fileList;
     private boolean verbose = true;
+
+    protected Lock fileLock;
+    protected Lock fileListLock;
+    protected Lock lockTableLock;
 
 	private void run() {
 		if (System.getSecurityManager() == null) {
@@ -93,15 +106,23 @@ public class Server implements ServerInterface {
 	public boolean create(String name) throws RemoteException {
 		boolean result = false;
 
+        fileLock.lock();
         if (!files.containsKey(name)) {
-            files.put(name, new ServerFile(name));
-            fileList.add(name);
-            result = true;
-            output("Created new file : " + name);
-        }
-        else {
+            try {
+                files.put(name, new ServerFile(name));
+                fileList.add(name);
+                result = true;
+                output("Created new file : " + name);
+            } catch (Exception e){
+                fileLock.unlock();
+                throw new RemoteException("Exception occured", e);
+            }
+        } else {
+            fileLock.unlock();
             throw new RemoteException("File already exsits");
         }
+
+        fileLock.unlock();
 
         return result;
 	}
@@ -118,7 +139,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public HashMap<String, RemoteFile> syncLocalDir() throws RemoteException {
-        return files;
+        return new HashMap<String, RemoteFile>(files);
 	}
 
     /**
@@ -157,19 +178,31 @@ public class Server implements ServerInterface {
      */
 	@Override
 	public RemoteFile lock(String name, int clientId, byte[] checksum) throws RemoteException {
-		RemoteFile file = get(name, checksum);
+        RemoteFile file = getFileIfExists(name);
         if (file != null) {
-            if (!lockTable.containsKey(name)) {
-                lockTable.put(name, clientId);
-                output("Locked file : " + name);
+            if (Arrays.equals(file.getChecksum(), checksum) || file.getContent().length == 0) {
+                lockTableLock.lock();
+                if (!lockTable.containsKey(name)) {
+                    try {
+                        lockTable.put(name, clientId);
+                        output("Locked file : " + name);
+                    } catch (Exception e) {
+                        lockTableLock.unlock();
+                        throw new RemoteException("Exception occured", e);
+                    }
+                } else {
+                    lockTableLock.unlock();
+                    throw new RemoteException("File already locked.");
+                }
+
+                lockTableLock.unlock();
             }
-            else{
-                throw new RemoteException("File already locked.");
+            else {
+                throw new RemoteException("Client file differs from server.");
             }
         }
-        else
-        {
-            throw new RemoteException("Client file differs from server.");
+        else{
+            throw new RemoteException("File not found.");
         }
 
         return file;
@@ -188,30 +221,37 @@ public class Server implements ServerInterface {
         RemoteFile remoteFile = getFileIfExists(name);
 
         if (remoteFile != null) {
+            lockTableLock.lock();
             if (lockTable.containsKey(name)) {
                 if (lockTable.get(name) == clientId) {
-                    ServerFile file = (ServerFile)remoteFile;
-                    file.setContent(data);
+                    try {
+                        ServerFile file = (ServerFile) remoteFile;
+                        file.setContent(data);
 
-                    if (!fileList.contains(file.getName())) {
-                        fileList.add(file.getName());
+                        if (!fileList.contains(file.getName())) {
+                            fileList.add(file.getName());
+                        }
+
+                        if (files.containsKey(file.getName())) {
+                            files.remove(file.getName());
+                        }
+
+                        files.put(file.getName(), file);
+
+                        lockTable.remove(name);
+
+                        output("File pushed : " + name);
+                    } catch (Exception e) {
+                        lockTableLock.unlock();
+                        throw new RemoteException("Exception occured", e);
                     }
-
-                    if (files.containsKey(file.getName())){
-                        files.remove(file.getName());
-                    }
-
-                    files.put(file.getName(), file);
-
-                    lockTable.remove(name);
-
-                    output("File pushed : " + name);
                 }
                 else{
                     throw new RemoteException("File locked by another user.");
                 }
             }
             else{
+                lockTableLock.unlock();
                 throw new RemoteException("File must be locked.");
             }
         }
@@ -219,13 +259,20 @@ public class Server implements ServerInterface {
             throw new RemoteException("File not found!");
         }
 
+        lockTableLock.unlock();
         return true;
 	}
 
     protected RemoteFile getFileIfExists(String name){
         RemoteFile file = null;
-        if (files.containsKey(name)){
-            file = files.get(name);
+        lockTableLock.lock();
+        try {
+            if (files.containsKey(name)) {
+                file = files.get(name);
+            }
+        } catch (Exception e) {}
+        finally{
+            lockTableLock.unlock();
         }
 
         return file;

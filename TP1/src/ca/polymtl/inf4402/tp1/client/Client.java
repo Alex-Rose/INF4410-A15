@@ -3,6 +3,7 @@ package ca.polymtl.inf4402.tp1.client;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Paths;
@@ -356,15 +357,12 @@ public class Client {
                     case 10:
                         System.out.println("Appending word");
                         try {
-                            List<String> text = Files.readAllLines(Paths.get(filename));
-                            text.add(words.get(r.nextInt(words.size())));
-                            String finalText = "";
-                            for (Iterator<String> it = text.iterator(); it.hasNext();){
-                                finalText += it.next() + " ";
-                            }
+                            byte[] encoded = Files.readAllBytes(Paths.get(filename));
+                            String text = new String(encoded, Charset.forName("utf-8"));
+                            text += words.get(r.nextInt(words.size()));
 
                             Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"));
-                            writer.write(finalText);
+                            writer.write(text);
                             writer.close();
 
                         } catch (IOException e) {

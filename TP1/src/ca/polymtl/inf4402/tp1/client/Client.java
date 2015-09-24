@@ -15,7 +15,6 @@ import java.util.*;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
 import ca.polymtl.inf4402.tp1.shared.ServerInterface;
-import javafx.util.Pair;
 
 /**
  * Classe de base pour l'application client
@@ -29,10 +28,10 @@ import javafx.util.Pair;
  */
 public class Client {
 	public static void main(String[] args) {
-        Pair<String, String> arguments = parseArguments(args);
+        String[] arguments = parseArguments(args);
 
-        String action = arguments.getKey();
-        String value = arguments.getValue();
+        String action = arguments[0];
+        String value = arguments[1];
 
         if (action != null){
 
@@ -77,7 +76,7 @@ public class Client {
      * @param args argument array
      * @return action, option
      */
-    public static Pair<String, String> parseArguments(String[] args){
+    public static String[] parseArguments(String[] args){
         String action = null;
         if (args.length > 0) {
             action = args[0];
@@ -88,7 +87,7 @@ public class Client {
             param = args[1];
         }
 
-        return new Pair<String, String>(action, param);
+        return new String[]{action, param};
     }
 
     /**

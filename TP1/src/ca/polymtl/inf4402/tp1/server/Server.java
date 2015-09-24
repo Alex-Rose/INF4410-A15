@@ -12,7 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import ca.polymtl.inf4402.tp1.shared.RemoteFile;
 import ca.polymtl.inf4402.tp1.shared.ServerInterface;
-import sun.awt.Mutex;
 
 public class Server implements ServerInterface {
 

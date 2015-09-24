@@ -1,15 +1,10 @@
 package ca.polymtl.inf4402.tp1.client;
 
-import javafx.util.Pair;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.IntSummaryStatistics;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+
 
 /**
  * Created by Alexandre on 9/15/2015.

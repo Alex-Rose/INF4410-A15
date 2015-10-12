@@ -25,8 +25,17 @@
 		</javac>
 	</target>
 	<target depends="build-class" name="build-jar">
-		<jar destfile="shared.jar" basedir="bin" includes="ca/polymtl/inf4402/tp1/shared/**" update="false" />
+		<jar destfile="shared.jar" basedir="bin" includes="ca/polymtl/inf4402/tp1/shared/**" update="false">
+
+		</jar>
 		<jar destfile="server.jar" basedir="bin" includes="ca/polymtl/inf4402/tp1/server/**" update="false" />
-		<jar destfile="client.jar" basedir="bin" includes="ca/polymtl/inf4402/tp1/client/**" update="false" />
+		<jar destfile="client.jar" basedir="bin" includes="ca/polymtl/inf4402/tp1/client/**" update="false">
+            <manifest>
+                <attribute name="Main-Class" value="ca.polymtl.inf4402.tp1.client.Client"/>
+            </manifest>
+        </jar>
+	</target>
+	<target name="run">
+	        <java jar="client.jar" fork="true"/>
 	</target>
 </project>

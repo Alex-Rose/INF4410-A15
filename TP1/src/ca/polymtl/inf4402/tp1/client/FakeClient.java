@@ -26,6 +26,7 @@ public class FakeClient {
      * @param distantHostname Remote server hostname (IP ou nom de domaine)
      */
     public FakeClient(String distantHostname){
+        localServer = new FakeServer();
         localServerStub = loadServerStub("127.0.0.1");
         distantServerStub = loadServerStub(distantHostname);
 

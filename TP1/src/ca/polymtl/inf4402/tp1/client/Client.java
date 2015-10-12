@@ -59,7 +59,7 @@ public class Client {
                 } catch (NoSuchMethodException e) {
                     printHelp();
                 } catch (InvocationTargetException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     System.err.println(e.getTargetException().getMessage());
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();

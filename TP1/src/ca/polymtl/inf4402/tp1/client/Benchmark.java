@@ -21,11 +21,11 @@ public class Benchmark {
 
             long timestamp = System.currentTimeMillis() / 1000L;
 
-            normalWriter = new Writer(fileNameBuilder(resultsDir, "results_normal", timestamp));
+            normalWriter = new Writer(fileNameBuilder(resultsDir, "normal", timestamp));
             normalWriter.start();
-            localWriter = new Writer(fileNameBuilder(resultsDir, "local_normal", timestamp));
+            localWriter = new Writer(fileNameBuilder(resultsDir, "local", timestamp));
             localWriter.start();
-            remoteWriter = new Writer(fileNameBuilder(resultsDir, "remote_normal", timestamp));
+            remoteWriter = new Writer(fileNameBuilder(resultsDir, "remote", timestamp));
             remoteWriter.start();
         } catch (IOException e) {
             e.printStackTrace();

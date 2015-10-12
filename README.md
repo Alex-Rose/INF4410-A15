@@ -2,6 +2,12 @@
 
 ## TP 1
 
+## How to execute
+Use `client` to print help file.
+
+You must run `client setServer` before using the client. The configuration for
+which server to use will be stored in the .server file.
+
 ### Server environment
 Ports must be opened. With iptables use
 ```bash
@@ -24,10 +30,10 @@ export _JAVA_OPTIONS="-Djava.rmi.server.hostname=132.207.4.36
 This can also be added to the server bash script
 
 ### Building
-Build with **ant**, which uses the *build.xml* file. 
+Build with **ant**, which uses the *build.xml* file.
 
 ### Windows particularities
-To launch the processes under windows, use the scripts available as some extra JVM configuration is required. 
+To launch the processes under windows, use the scripts available as some extra JVM configuration is required.
 
 Before launching the server, run *start_rmiretistry.cmd* to avoid *ClassNotFound* exception.
 

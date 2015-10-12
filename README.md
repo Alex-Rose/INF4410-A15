@@ -2,11 +2,12 @@
 
 ## TP 1
 
-## How to execute
-Use `client` to print help file.
+### How to execute
+Compile using `ant`
 
-You must run `client setServer` before using the client. The configuration for
-which server to use will be stored in the .server file.
+Use `client` command to print help file.
+
+You must run `client setServer` before using the client. The server configuration will be stored in .server file.
 
 ### Server environment
 Ports must be opened. With iptables use

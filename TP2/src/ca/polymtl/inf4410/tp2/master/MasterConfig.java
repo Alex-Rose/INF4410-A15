@@ -31,6 +31,8 @@ public class MasterConfig extends Config {
     private String operationFile;
     private ArrayList<String> servers;
     private String configFile;
+    private String workerName;
+    private int rmiPort;
 
     public static MasterConfig readFromFile(String path) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -41,6 +43,8 @@ public class MasterConfig extends Config {
         config.operationFile = getValue(doc, "operationFile");
         config.configFile = getValue(doc, "configFile");
         config.servers = getStringList(doc, "servers");
+        config.workerName = getValue(doc, "workerName");
+        config.rmiPort = getIntegerValue(doc, "rmiPort");
 
         return config;
     }
@@ -62,6 +66,14 @@ public class MasterConfig extends Config {
 
         child = doc.createElement("configFile");
         child.appendChild(doc.createTextNode(operationFile));
+        root.appendChild(child);
+
+        child = doc.createElement("workerName");
+        child.appendChild(doc.createTextNode(workerName));
+        root.appendChild(child);
+
+        child = doc.createElement("rmiPort");
+        child.appendChild(doc.createTextNode(Integer.toString(rmiPort)));
         root.appendChild(child);
 
         child = doc.createElement("servers");
@@ -96,6 +108,14 @@ public class MasterConfig extends Config {
         }
 
         if (cfg.servers.size() != this.servers.size()) {
+            return false;
+        }
+
+        if (!cfg.workerName.equals(this.workerName)) {
+            return false;
+        }
+
+        if (cfg.rmiPort != this.rmiPort) {
             return false;
         }
 
@@ -138,5 +158,21 @@ public class MasterConfig extends Config {
 
     public void setConfigFile(String configFile) {
         this.configFile = configFile;
+    }
+
+    public String getWorkerName() {
+        return workerName;
+    }
+
+    public void setWorkerName(String workerName) {
+        this.workerName = workerName;
+    }
+
+    public int getRmiPort() {
+        return rmiPort;
+    }
+
+    public void setRmiPort(int rmiPort) {
+        this.rmiPort = rmiPort;
     }
 }

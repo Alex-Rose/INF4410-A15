@@ -22,6 +22,8 @@ public class Master {
         this.config = config;
         populateOperations();
         initializeServerStubs();
+
+        System.out.println("Result : " + serverStubs.get(0).executeOperations(null));
     }
 
     private void populateOperations() throws IOException{
@@ -39,8 +41,8 @@ public class Master {
 		for (int i = 0; i < servers.size(); i++){
 			ServerInterface stub = null;
 			try {
-	            Registry registry = LocateRegistry.getRegistry(servers.get(i));
-	            stub = (ServerInterface) registry.lookup("server");
+	            Registry registry = LocateRegistry.getRegistry(servers.get(i), config.getRmiPort());
+	            stub = (ServerInterface) registry.lookup(config.getWorkerName());
 	        } catch (NotBoundException e) {
 	            System.out.println("Erreur: Le nom '" + e.getMessage() + "' n'est pas défini dans le registre.");
 	        } catch (AccessException e) {

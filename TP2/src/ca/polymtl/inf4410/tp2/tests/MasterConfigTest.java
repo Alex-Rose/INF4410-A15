@@ -45,6 +45,8 @@ public class MasterConfigTest {
         config.setConfigFile("file.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
+        config.setWorkerName("worker");
+        config.setRmiPort(1099);
 
         MasterConfig config2 = new MasterConfig();
 
@@ -52,6 +54,8 @@ public class MasterConfigTest {
         config2.setConfigFile("file.xml");
         config2.setOperationFile("lol.op");
         config2.setServers(servers);
+        config2.setWorkerName("worker");
+        config2.setRmiPort(1099);
 
         assertTrue(config.equals(config2));
     }
@@ -94,6 +98,21 @@ public class MasterConfigTest {
     }
 
     @Test
+    public void testGetWorkerName() throws Exception {
+        MasterConfig config = new MasterConfig();
+        String name = "werker";
+        config.setWorkerName(name);
+        assertEquals(name, config.getWorkerName());
+    }
+
+    public void testGetRmiPort() throws Exception {
+        MasterConfig config = new MasterConfig();
+        int port = 1091;
+        config.setRmiPort(port);
+        assertEquals(port, config.getRmiPort());
+    }
+
+    @Test
     public void testReadWrite() throws Exception {
         MasterConfig config = new MasterConfig();
 
@@ -106,6 +125,8 @@ public class MasterConfigTest {
         config.setConfigFile("file.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
+        config.setWorkerName("worker");
+        config.setRmiPort(1099);
         config.writeToFile(filePath);
 
         MasterConfig cfg2 = MasterConfig.readFromFile(filePath);

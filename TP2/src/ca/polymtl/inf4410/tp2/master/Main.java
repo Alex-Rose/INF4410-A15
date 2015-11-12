@@ -32,6 +32,10 @@ public class Main {
                 config = MasterConfig.readFromFile(configFile);
             } else {
                 config = new MasterConfig();
+                config.setOperationFile(operationFile);
+                config.setSafeMode(safeMode);
+                config.setServers(servers);
+                config.setConfigFile(configFile);
             }
 
             instance = new Master(config);
@@ -77,12 +81,12 @@ public class Main {
                     throw new Exception("Invalid arguments");
                 }
             }
-            // Servers labo l4712
+            // Safe mode
             else if (args[i].equals("-f") || args[i].equals("--safe")) {
                 safeMode = true;
             }
 
-            // Servers labo l4712
+            // Config file
             else if (args[i].equals("-c") || args[i].equals("--config")) {
                 if (++i < args.length) {
                     configFile = args[i];

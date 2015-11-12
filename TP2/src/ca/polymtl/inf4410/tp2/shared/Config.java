@@ -33,4 +33,9 @@ public abstract class Config {
         return list;
     }
 
+    protected static int getIntegerValue(Document doc, String name) {
+        Node node = doc.getElementsByTagName(name).item(0);
+        return Integer.parseInt(node.getTextContent());
+    }
+
 }

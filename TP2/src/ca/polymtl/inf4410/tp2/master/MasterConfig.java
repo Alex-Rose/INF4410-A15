@@ -45,7 +45,7 @@ public class MasterConfig extends Config {
         return config;
     }
 
-    public MasterConfig writeToFile(String path) throws Exception {
+    public void writeToFile(String path) throws Exception {
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
         Document doc = builder.newDocument();
@@ -78,8 +78,6 @@ public class MasterConfig extends Config {
         StreamResult result = new StreamResult(new File(path));
 
         transformer.transform(source, result);
-
-        return new MasterConfig();
     }
 
     @Override

@@ -39,6 +39,9 @@
                 <attribute name="Main-Class" value="ca.polymtl.inf4410.tp2.worker.Main"/>
             </manifest>
         </jar>
+                <jar destfile="operations.jar" basedir="bin" includes="ca/polymtl/inf4410/tp2/operations/**" update="false">
+        </jar>
+
 	</target>
 	<target name="run">
 	        <java jar="master.jar" fork="true"/>

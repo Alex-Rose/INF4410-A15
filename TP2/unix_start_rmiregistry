@@ -1,0 +1,5 @@
+pushd $(dirname $0) > /dev/null
+basepath=$(pwd)
+popd > /dev/null
+
+rmiregistry -J-Djava.rmi.server.codebase=file:$basepath/bin/ $*

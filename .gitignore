@@ -18,3 +18,5 @@ hs_err_pid*
 TP1/results/*
 TP1/.uid
 TP1/.server
+
+.metadata

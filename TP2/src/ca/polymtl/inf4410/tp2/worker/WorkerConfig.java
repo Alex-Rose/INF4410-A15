@@ -1,8 +1,6 @@
 package ca.polymtl.inf4410.tp2.worker;
 
 import ca.polymtl.inf4410.tp2.shared.Config;
-import ca.polymtl.inf4410.tp2.shared.Operation;
-import ca.polymtl.inf4410.tp2.shared.ServerInterface;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -16,11 +14,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.rmi.ConnectException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.List;
 
 /**
  * @author Alexandre on 11/12/2015.

@@ -1,14 +1,11 @@
-﻿package ca.polymtl.inf4410.tp2.master;
+package ca.polymtl.inf4410.tp2.master;
 
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -107,6 +104,7 @@ public class Master {
             runners.get(next).addOperations(remainingOp);
         } else {
             // Crash and burn
+            System.out.println("Last node just died.");
         }
     }
 
@@ -119,14 +117,18 @@ public class Master {
         public int size;
         public AtomicInteger result;
         public boolean terminated;
+        public int processedOps;
 
         public Lock operationLock;
 
         public Runner(int index, List<Operation> operationPool, int size, ServerInterface worker) {
             this.operationPool = new ConcurrentLinkedQueue<>(operationPool);
+            this.pendingOperations = new ConcurrentLinkedQueue<>();
+            this.operationLock = new ReentrantLock();
             this.size = size;
-            result = new AtomicInteger();
-            result.set(0);
+            this.result = new AtomicInteger();
+            this.result.set(0);
+            this.processedOps = 0;
             this.size = size;
             this.index = index;
             this.worker = worker;
@@ -134,23 +136,46 @@ public class Master {
 
         @Override
         public void run() {
+            try {
+                while (!operationPool.isEmpty()) {
 
-            while (!operationPool.isEmpty()) {
+                    if (pendingOperations.isEmpty()) {
+                        for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
+                            pendingOperations.add(operationPool.poll());
+                        }
+                    }
 
-                List<Operation> batch = new ArrayList<>();
+                    List<Operation> batch = new ArrayList<Operation>();
 
-                for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                    batch.add(operationPool.poll());
+                    for (Iterator<Operation> it = pendingOperations.iterator(); it.hasNext(); ) {
+                        batch.add(it.next());
+                    }
+
+
+                    try {
+                        long start = System.nanoTime();
+                        int res = worker.executeOperations(batch);
+                        long stop = System.nanoTime();
+
+                        result.addAndGet(res);
+
+                        int batchSize = batch.size();
+                        System.out.println("Worker " + index + " processed operations " + processedOps + " through " + (processedOps + batchSize - 1) + " (" + batchSize + " ops) - took " + (stop - start) / 1000000 + " ms - result : " +res);
+
+                        processedOps += batchSize;
+                        pendingOperations.clear();
+                    } catch (RequestRejectedException e) {
+                        // Retry
+                    }
+
                 }
 
-                try {
-                    result.addAndGet(worker.executeOperations(batch));
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
+                completeWork();
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                handleFailure();
             }
-
-            completeWork();
         }
 
         private void completeWork() {
@@ -159,6 +184,7 @@ public class Master {
         }
 
         private void handleFailure() {
+            System.out.println("Worker " + index + " died");
             operationLock.lock();
 
             while (pendingOperations.size() > 0) {
@@ -167,7 +193,7 @@ public class Master {
 
             operationLock.unlock();
 
-            alertWorkerDisconnected(index, (Operation[]) operationPool.toArray());
+            alertWorkerDisconnected(index, operationPool.toArray(new Operation[0]));
         }
 
         public void addOperations(Operation[] remainingOp) {

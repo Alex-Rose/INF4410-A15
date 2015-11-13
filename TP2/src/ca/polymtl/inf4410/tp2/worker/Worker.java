@@ -31,7 +31,7 @@ public class Worker implements ServerInterface {
         try {
             ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(this, config.getPort());
 
-            Registry registry = LocateRegistry.getRegistry(5048);
+            Registry registry = LocateRegistry.getRegistry(1099);
             registry.rebind(config.getName(), stub);
             System.out.println("Server ready.");
         } catch (ConnectException e) {
@@ -45,19 +45,26 @@ public class Worker implements ServerInterface {
     }
 
     @Override
-    public int executeOperations(List<Operation> operations) throws RemoteException, RequestRejectedException{
-        if(accept(operations)){
-        	int r = 0;
-        	for (Operation op : operations) {
-            r += Operations.fib(op.operand);
-            r = r % 5000;
-        }
+    public int executeOperations(List<Operation> operations) throws RemoteException, RequestRejectedException {
+        if (accept(operations)) {
+            int r = 0;
+            for (Operation op : operations) {
+                switch (op.name) {
+                    case "fib":
+                        System.out.println("Executing fib " + op.operand);
+                        r += Operations.fib(op.operand);
+                    case "prime":
+                        System.out.println("Executing prime " + op.operand);
+                        r += Operations.prime(op.operand);
+                }
 
-        System.out.println("Processed " + operations.size() + " operations");
-        return r;
-        }
-        else{
-        	throw new RequestRejectedException();
+                r = r % 5000;
+            }
+
+            System.out.println("Processed " + operations.size() + " operations");
+            return r;
+        } else {
+            throw new RequestRejectedException();
         }
     }
     
@@ -67,7 +74,7 @@ public class Worker implements ServerInterface {
     		return true;
     	}
     	else{
-    		int rejectRate = (operations.size()- capacity)/capacity *100;
+    		int rejectRate = (operations.size()- capacity)/(9*capacity) *100;
     		int randomNumber = rand.nextInt(100 + 1);
     		if(randomNumber > rejectRate){
     			return true;

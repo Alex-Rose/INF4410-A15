@@ -1,1 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><Configuration><safeMode>true</safeMode><operationFile>operations.txt</operationFile><configFile>file.xml</configFile><workerName>ComputationUnit</workerName><rmiPort>5048</rmiPort><servers><server>localhost</server><server>test2</server><server>test2</server></servers></Configuration>
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <safeMode>true</safeMode>
+  <operationFile>donnees/donnees-2317.txt</operationFile>
+  <configFile>file.xml</configFile>
+  <workerName>ComputationUnit</workerName>
+  <rmiPort>5048</rmiPort>
+  <servers><server>l4712-03.info.polymtl.ca</server></servers>
+</Configuration>

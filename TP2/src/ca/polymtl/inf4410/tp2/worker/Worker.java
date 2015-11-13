@@ -1,5 +1,6 @@
 package ca.polymtl.inf4410.tp2.worker;
 
+import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.Operation;
 import ca.polymtl.inf4410.tp2.shared.RequestRejectedException;
 import ca.polymtl.inf4410.tp2.shared.ServerInterface;
@@ -46,7 +47,14 @@ public class Worker implements ServerInterface {
     @Override
     public int executeOperations(List<Operation> operations) throws RemoteException, RequestRejectedException{
         if(accept(operations)){
-        	return 3;
+        	int r = 0;
+        	for (Operation op : operations) {
+            r += Operations.fib(op.operand);
+            r = r % 5000;
+        }
+
+        System.out.println("Processed " + operations.size() + " operations");
+        return r;
         }
         else{
         	throw new RequestRejectedException();
@@ -68,6 +76,5 @@ public class Worker implements ServerInterface {
     			return false;
     		}
     	}
-    	
     }
 }

@@ -1,1 +1,4 @@
-add 2
+fib 20
+fib 10
+fib 5
+fib 30

@@ -1,4 +1,4 @@
-package ca.polymtl.inf4410.tp2.master;
+﻿package ca.polymtl.inf4410.tp2.master;
 
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
@@ -33,7 +33,6 @@ public class Master {
 
         populateOperations();
         initializeServerStubs();
-
         dispatchWork();
     }
 

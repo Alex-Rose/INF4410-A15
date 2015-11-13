@@ -68,9 +68,11 @@ public class Master {
         for (int i = 0; i < count; i++) {
             int batchSize = i == count - 1 ? size + operations.size() % count : size;
 
-            Runner r = new Runner(i, operations.subList(i * size, batchSize), 10, serverStubs.get(i));
-            runners.add(r);
+            int begin = i * size;
+            int end = begin + batchSize;
+            Runner r = new Runner(i, operations.subList(i * size, end), 100, serverStubs.get(i));
             r.start();
+            runners.add(r);
         }
 
 
@@ -78,6 +80,7 @@ public class Master {
 
     private void completeRunnerExecution(int index) {
         result.addAndGet(runners.get(index).result.get());
+        result.updateAndGet(operand -> operand % 5000);
 
         // Check if last to finish
         // This should be synchronized somehow

@@ -167,7 +167,6 @@ public class Master {
                     } catch (RequestRejectedException e) {
                         // Retry
                     }
-
                 }
 
                 completeWork();

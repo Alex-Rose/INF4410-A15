@@ -5,5 +5,5 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public interface ServerInterface extends Remote{
-	int executeOperations(List<Operation> operations) throws RemoteException;
+	int executeOperations(List<Operation> operations) throws RemoteException, RequestRejectedException;
 }

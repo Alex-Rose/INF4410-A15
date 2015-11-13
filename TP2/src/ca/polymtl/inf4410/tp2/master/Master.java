@@ -23,7 +23,11 @@ public class Master {
         populateOperations();
         initializeServerStubs();
 
-        System.out.println("Result : " + serverStubs.get(0).executeOperations(null));
+        try {
+			System.out.println("Result : " + serverStubs.get(0).executeOperations(null));
+		} catch (RequestRejectedException e) {
+			System.out.println(e.getMessage());
+		}
     }
 
     private void populateOperations() throws IOException{
@@ -58,7 +62,7 @@ public class Master {
 
 	private static void executeOperations(){
 		
-	//	int serverLoad = operations.size()/3;
+		
 		
 		
 	}

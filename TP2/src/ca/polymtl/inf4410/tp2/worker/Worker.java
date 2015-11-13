@@ -1,6 +1,7 @@
 package ca.polymtl.inf4410.tp2.worker;
 
 import ca.polymtl.inf4410.tp2.shared.Operation;
+import ca.polymtl.inf4410.tp2.shared.RequestRejectedException;
 import ca.polymtl.inf4410.tp2.shared.ServerInterface;
 
 import java.rmi.ConnectException;
@@ -9,6 +10,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author Alexandre on 11/12/2015.
@@ -16,6 +18,8 @@ import java.util.List;
 public class Worker implements ServerInterface {
 
     private WorkerConfig config;
+    
+    private Random rand;
 
     public Worker(WorkerConfig config) {
         this.config = config;
@@ -40,7 +44,30 @@ public class Worker implements ServerInterface {
     }
 
     @Override
-    public int executeOperations(List<Operation> operations) throws RemoteException{
-        return 0;
+    public int executeOperations(List<Operation> operations) throws RemoteException, RequestRejectedException{
+        if(accept(operations)){
+        	return 3;
+        }
+        else{
+        	throw new RequestRejectedException();
+        }
+    }
+    
+    private Boolean accept(List<Operation> operations){
+    	int capacity = config.getCapacity();
+    	if(operations.size() <= capacity){
+    		return true;
+    	}
+    	else{
+    		int rejectRate = (operations.size()- capacity)/capacity *100;
+    		int randomNumber = rand.nextInt(100 + 1);
+    		if(randomNumber > rejectRate){
+    			return true;
+    		}
+    		else{
+    			return false;
+    		}
+    	}
+    	
     }
 }

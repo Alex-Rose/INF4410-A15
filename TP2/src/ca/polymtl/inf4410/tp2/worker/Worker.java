@@ -27,7 +27,7 @@ public class Worker implements ServerInterface {
         try {
             ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(this, config.getPort());
 
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(5048);
             registry.rebind(config.getName(), stub);
             System.out.println("Server ready.");
         } catch (ConnectException e) {

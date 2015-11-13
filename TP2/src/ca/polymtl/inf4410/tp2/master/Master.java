@@ -1,4 +1,4 @@
-﻿package ca.polymtl.inf4410.tp2.master;
+package ca.polymtl.inf4410.tp2.master;
 
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
@@ -147,6 +147,8 @@ public class Master {
                     result.addAndGet(worker.executeOperations(batch));
                 } catch (RemoteException e) {
                     e.printStackTrace();
+                } catch (RequestRejectedException e){
+                	e.printStackTrace();
                 }
             }
 

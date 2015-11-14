@@ -13,15 +13,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.*;
 
-public class Master {
-	private ArrayList<ServerInterface> serverStubs;
-    private ArrayList<Runner> runners;
-	private ArrayList<Operation> operations;
-    private MasterConfig config;
+public abstract class Master {
+	protected ArrayList<ServerInterface> serverStubs;
+    protected ArrayList<Runner> runners;
+	protected ArrayList<Operation> operations;
+    protected MasterConfig config;
 
-    private AtomicInteger result;
+    protected AtomicInteger result;
+
+    abstract protected void dispatchWork();
+    abstract protected void completeRunnerExecution(int index);
+    abstract protected void alertWorkerDisconnected(int index, Operation[] remainingOp);
 
     public Master(MasterConfig config) throws IOException {
         result = new AtomicInteger();
@@ -29,20 +34,11 @@ public class Master {
         this.config = config;
 
         populateOperations();
-        initializeServerStubs();
+         initializeServerStubs();
         dispatchWork();
     }
 
-    private void populateOperations() throws IOException{
-		operations = new ArrayList<Operation>();
-		for (String line : Files.readAllLines(Paths.get(config.getOperationFile()))) {
-			String[] splitLine = line.split("\\s+");
-			Operation operation = new Operation(splitLine[0], Integer.parseInt(splitLine[1]));
-			operations.add(operation);
-		}
-	}
-	
-	private void initializeServerStubs(){
+    protected void initializeServerStubs(){
 		serverStubs = new ArrayList<ServerInterface>();
         ArrayList<String> servers = config.getServers();
 		for (int i = 0; i < servers.size(); i++){
@@ -61,57 +57,16 @@ public class Master {
 		}
 	}
 
-    private void dispatchWork() {
-        int count = serverStubs.size();
-        int size = operations.size() / count;
-
-        for (int i = 0; i < count; i++) {
-            int batchSize = i == count - 1 ? size + operations.size() % count : size;
-
-            int begin = i * size;
-            int end = begin + batchSize;
-            Runner r = new Runner(i, operations.subList(i * size, end), 100, serverStubs.get(i));
-            r.start();
-            runners.add(r);
-        }
-
-
-    }
-
-    private void completeRunnerExecution(int index) {
-        result.addAndGet(runners.get(index).result.get());
-        result.updateAndGet(operand -> operand % 5000);
-
-        // Check if last to finish
-        // This should be synchronized somehow
-        boolean last = true;
-        for (int i = 0; i < runners.size(); i++) {
-            if (index == i) continue;
-
-            if (!runners.get(i).terminated) {
-                last = false;
-                break;
-            }
-        }
-
-        if (last) {
-            System.out.println("Result is " + result);
+    protected void populateOperations() throws IOException{
+        operations = new ArrayList<Operation>();
+        for (String line : Files.readAllLines(Paths.get(config.getOperationFile()))) {
+            String[] splitLine = line.split("\\s+");
+            Operation operation = new Operation(splitLine[0], Integer.parseInt(splitLine[1]));
+            operations.add(operation);
         }
     }
 
-    private void alertWorkerDisconnected(int index, Operation[] remainingOp) {
-        // just give it all to another one
-        int next = (index + 1) % serverStubs.size();
-
-        if (next != index) {
-            runners.get(next).addOperations(remainingOp);
-        } else {
-            // Crash and burn
-            System.out.println("Last node just died.");
-        }
-    }
-
-    private class Runner extends Thread {
+    protected abstract class Runner extends Thread{
 
         public final int index;
         public ConcurrentLinkedQueue<Operation> operationPool;
@@ -123,6 +78,8 @@ public class Master {
         public int processedOps;
 
         public Lock operationLock;
+
+        abstract protected void completeWork();
 
         public Runner(int index, List<Operation> operationPool, int size, ServerInterface worker) {
             this.operationPool = new ConcurrentLinkedQueue<>(operationPool);
@@ -137,55 +94,7 @@ public class Master {
             this.worker = worker;
         }
 
-        @Override
-        public void run() {
-            try {
-                while (!operationPool.isEmpty()) {
-
-                    if (pendingOperations.isEmpty()) {
-                        for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                            pendingOperations.add(operationPool.poll());
-                        }
-                    }
-
-                    List<Operation> batch = new ArrayList<Operation>();
-
-                    for (Iterator<Operation> it = pendingOperations.iterator(); it.hasNext(); ) {
-                        batch.add(it.next());
-                    }
-
-
-                    try {
-                        long start = System.nanoTime();
-                        int res = worker.executeOperations(batch);
-                        long stop = System.nanoTime();
-
-                        result.addAndGet(res);
-
-                        int batchSize = batch.size();
-                        System.out.println("Worker " + index + " processed operations " + processedOps + " through " + (processedOps + batchSize - 1) + " (" + batchSize + " ops) - took " + (stop - start) / 1000000 + " ms - result : " +res);
-
-                        processedOps += batchSize;
-                        pendingOperations.clear();
-                    } catch (RequestRejectedException e) {
-                        // Retry
-                    }
-                }
-
-                completeWork();
-
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                handleFailure();
-            }
-        }
-
-        private void completeWork() {
-            terminated = true;
-            completeRunnerExecution(index);
-        }
-
-        private void handleFailure() {
+        protected void handleFailure() {
             System.out.println("Worker " + index + " died");
             operationLock.lock();
 
@@ -204,4 +113,6 @@ public class Master {
             operationLock.unlock();
         }
     }
+
+
 }

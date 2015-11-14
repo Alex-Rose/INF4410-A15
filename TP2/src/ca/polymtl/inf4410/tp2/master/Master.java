@@ -34,7 +34,7 @@ public abstract class Master {
         this.config = config;
 
         populateOperations();
-         initializeServerStubs();
+        initializeServerStubs();
         dispatchWork();
     }
 

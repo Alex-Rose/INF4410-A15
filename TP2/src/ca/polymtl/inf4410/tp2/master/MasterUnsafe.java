@@ -21,29 +21,19 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author Alexandre on 11/14/2015.
  */
-public class MasterSafe extends Master {
+public class MasterUnsafe extends Master {
 
-    public MasterSafe(MasterConfig config) throws IOException {
+    public MasterUnsafe(MasterConfig config) throws IOException {
         super(config);
     }
 
     protected void dispatchWork() {
         int count = serverStubs.size();
 
-        if (count > 0) {
-            int size = operations.size() / count;
-
-            for (int i = 0; i < count; i++) {
-                int batchSize = i == count - 1 ? size + operations.size() % count : size;
-
-                int begin = i * size;
-                int end = begin + batchSize;
-                Runner r = new RunnerSafe(i, operations.subList(i * size, end), 100, serverStubs.get(i));
-                r.start();
-                runners.add(r);
-            }
-        } else {
-            System.err.println("Could not connect to any worker. The process will end now");
+        for (int i = 0; i < count; i++) {
+            Runner r = new RunnerUnsafe(i, operations, 100, serverStubs.get(i));
+            r.start();
+            runners.add(r);
         }
     }
 
@@ -80,8 +70,8 @@ public class MasterSafe extends Master {
         }
     }
 
-    protected class RunnerSafe extends Runner {
-        public RunnerSafe(int index, List<Operation> operationPool, int size, ServerInterface worker) {
+    protected class RunnerUnsafe extends Runner {
+        public RunnerUnsafe(int index, List<Operation> operationPool, int size, ServerInterface worker) {
             super(index, operationPool, size, worker);
         }
 

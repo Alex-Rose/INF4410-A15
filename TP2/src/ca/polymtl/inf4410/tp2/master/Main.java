@@ -38,7 +38,7 @@ public class Main {
                 config.setConfigFile(configFile);
             }
 
-            instance = new Master(config);
+            instance = new MasterSafe(config);
 
         } catch (Exception e) {
             e.printStackTrace();

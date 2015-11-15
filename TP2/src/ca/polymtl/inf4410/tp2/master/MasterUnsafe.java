@@ -51,20 +51,6 @@ public class MasterUnsafe extends Master {
         boolean last = true;
         for (int i = 0; i < runners.size(); i++) {
             if (index == i) continue;
-            
-            if(i == 0)
-            {
-            	resultatTemp1 = runners.get(i).result.get();
-            }
-            else if(i == 1)
-            {
-            	resultatTemp2 = runners.get(i).result.get();
-            }
-            else if(i == 2)
-            {
-            	resultatTemp3 = runners.get(i).result.get();
-            }
-
             if (!runners.get(i).terminated) {
                 last = false;
                 break;
@@ -72,13 +58,33 @@ public class MasterUnsafe extends Master {
         }
 
         if (last) {
-        	//Marche pas vrm encore -- Index toujours pareille
-        	 if(resultatTemp1 == resultatTemp2)
+        	
+        	for (int i = 0; i < runners.size(); ++i) {
+        		if(i == 0)
+                {
+                	resultatTemp1 = runners.get(i).result.get();
+                }
+                else if(i == 1)
+                {
+                	resultatTemp2 = runners.get(i).result.get();
+                }
+                else if(i == 2)
+                {
+                	resultatTemp3 = runners.get(i).result.get();
+                }
+        	}
+        	if( resultatTemp1 != resultatTemp2 && resultatTemp1 != resultatTemp3  && resultatTemp2 != resultatTemp3 )
+        	{
+        		// RERUN
+        	}
+        	
+        	if(resultatTemp1 == resultatTemp2)
              	result.set(resultatTemp1);
              else if(resultatTemp1 == resultatTemp3)
             	 result.set(resultatTemp1);
              else if(resultatTemp2 == resultatTemp3)
             	 result.set(resultatTemp2);
+        	
         	
             System.out.println("Result is " + result);
         }

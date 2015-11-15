@@ -78,6 +78,7 @@ public class Worker implements ServerInterface {
             System.out.println("Processed " + operations.size() + " operations");
             return r;
         } else {
+        	System.out.println("Operation Rejected");
             throw new RequestRejectedException();
         }
     }

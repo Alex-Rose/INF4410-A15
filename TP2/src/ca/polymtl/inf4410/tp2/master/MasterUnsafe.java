@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -18,14 +19,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.sun.javafx.collections.MappingChange.Map;
+
 /**
  * @author Alexandre on 11/14/2015.
  */
 public class MasterUnsafe extends Master {
 
-	private int resultatTemp1 = 0;
-	private int resultatTemp2 = 0;
-	private int resultatTemp3 = 0;
 	
     public MasterUnsafe(MasterConfig config) throws IOException {
         super(config);
@@ -58,35 +58,25 @@ public class MasterUnsafe extends Master {
         }
 
         if (last) {
+        	HashMap <Integer, Integer> results = new HashMap<Integer, Integer>(); 
         	
-        	for (int i = 0; i < runners.size(); ++i) {
-        		if(i == 0)
-                {
-                	resultatTemp1 = runners.get(i).result.get();
-                }
-                else if(i == 1)
-                {
-                	resultatTemp2 = runners.get(i).result.get();
-                }
-                else if(i == 2)
-                {
-                	resultatTemp3 = runners.get(i).result.get();
-                }
-        	}
-        	if( resultatTemp1 != resultatTemp2 && resultatTemp1 != resultatTemp3  && resultatTemp2 != resultatTemp3 )
+        	for(int i = 0; i < runners.size(); ++i)
         	{
-        		// RERUN
+        		int result = runners.get(i).result.get();
+        		int count = results.containsKey(result) ? results.get(result) : 0;
+        		results.put(result, ++count );
+        		
         	}
         	
-        	if(resultatTemp1 == resultatTemp2)
-             	result.set(resultatTemp1);
-             else if(resultatTemp1 == resultatTemp3)
-            	 result.set(resultatTemp1);
-             else if(resultatTemp2 == resultatTemp3)
-            	 result.set(resultatTemp2);
+        	int finalAnwser = -1;
+        	for (HashMap.Entry<Integer, Integer> entry : results.entrySet())
+        	{
+        		if(entry.getValue() > runners.size()/2)
+        			finalAnwser = entry.getKey();
+        	}
         	
         	
-            System.out.println("Result is " + result);
+            System.out.println("Result is " + finalAnwser);
         }
     }
 
@@ -110,19 +100,29 @@ public class MasterUnsafe extends Master {
         @Override
         public void run() {
             try {
+            	int rerun = 0;
                 while (!operationPool.isEmpty()) {
-
+                	
                     if (pendingOperations.isEmpty()) {
                         for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                            pendingOperations.add(operationPool.poll());
+                        	if(rerun>0)
+                        	{
+                        		i += rerun;
+                        		pendingOperations.add(operationPool.poll());
+                        	}
+                        	else
+                        	{
+                        		pendingOperations.add(operationPool.poll());
+                        	}
                         }
                     }
-
+                    
                     List<Operation> batch = new ArrayList<Operation>();
 
                     for (Iterator<Operation> it = pendingOperations.iterator(); it.hasNext(); ) {
                         batch.add(it.next());
                     }
+                    System.out.println("size : "+ batch.size() + " rerun : " + rerun);
 
 
                     try {
@@ -138,7 +138,12 @@ public class MasterUnsafe extends Master {
                         processedOps += batchSize;
                         pendingOperations.clear();
                     } catch (RequestRejectedException e) {
-                        // Retry
+                    	//System.out.println(e);
+                    	Operation[] arr = new Operation[batch.size()];
+                    	arr = batch.toArray(arr);
+                    	runners.get(index).addOperations(arr);
+                    	++rerun;
+                    	pendingOperations.clear();
                     }
                 }
 

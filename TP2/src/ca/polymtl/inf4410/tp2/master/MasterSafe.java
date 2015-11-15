@@ -68,7 +68,6 @@ public class MasterSafe extends Master {
                  break;
              }
         }
-        
 
         if (last) {
         	int total = 0;

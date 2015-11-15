@@ -54,14 +54,21 @@ public class MasterSafe extends Master {
         // Check if last to finish
         // This should be synchronized somehow
         boolean last = true;
-        for (int i = 0; i < runners.size(); i++) {
+ /*       for (int i = 0; i < runners.size(); i++) {
             if (index == i) continue;
 
             if (!runners.get(i).terminated) {
                 last = false;
                 break;
             }
+        }*/
+        for (int i = 0; i < runners.size(); i++) {
+        	 if (!runners.get(i).terminated) {
+                 last = false;
+                 break;
+             }
         }
+        
 
         if (last) {
         	int total = 0;
@@ -77,9 +84,12 @@ public class MasterSafe extends Master {
     protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
         // just give it all to another one
         int next = (index + 1) % serverStubs.size();
-
+        
         if (next != index) {
-            runners.get(next).addOperations(remainingOp);
+        	List<Operation> list = new ArrayList<Operation>(Arrays.asList(remainingOp));
+        	Runner r = new RunnerSafe(runners.size(), list, 100, serverStubs.get(next));
+            r.start();
+            runners.add(r);
         } else {
             // Crash and burn
             System.out.println("Last node just died.");
@@ -131,7 +141,7 @@ public class MasterSafe extends Master {
 
                             int begin = i * size;
                             int end = begin + batchSize;
-                            Runner r = new RunnerSafe(runners.size()+1, batch.subList(i * size, end), 100, serverStubs.get(i));
+                            Runner r = new RunnerSafe(runners.size(), batch.subList(i * size, end), 100, serverStubs.get(i));
                             r.start();
                             runners.add(r);
                         } 
@@ -146,35 +156,6 @@ public class MasterSafe extends Master {
             }
         }
         
-        public void run(List<Operation> batch) {
-            try {
-            	try {
-                        long start = System.nanoTime();
-                        int res = worker.executeOperations(batch);
-                        long stop = System.nanoTime();
-
-                        result.addAndGet(res);
-
-                        int batchSize = batch.size();
-                        System.out.println("Worker " + index + " processed operations " + processedOps + " through " + (processedOps + batchSize - 1) + " (" + batchSize + " ops) - took " + (stop - start) / 1000000 + " ms - result : " +res);
-
-                        processedOps += batchSize;
-                        //pendingOperations = new ConcurrentLinkedQueue<Operation>(pendingOperations. .subList(batch.size(),pendingOperations.size()));
-                    } catch (RequestRejectedException e) {
-                    	System.out.println(e);
-                    	run(batch.subList(0, batch.size()/2));
-                    	run(batch.subList(batch.size()/2, batch.size()));
-                        // Retry
-                    }
-                
-
-                completeWork();
-
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                handleFailure();
-            }
-        }
         
 
         protected void completeWork() {
@@ -185,7 +166,7 @@ public class MasterSafe extends Master {
         protected void handleFailure() {
             System.out.println("Worker " + index + " died");
             operationLock.lock();
-
+            terminated = true;
             while (pendingOperations.size() > 0) {
                 operationPool.add(pendingOperations.poll());
             }

@@ -58,7 +58,7 @@ public class Worker implements ServerInterface {
                    case "prime":
                         System.out.println("Executing prime " + op.operand);
                         r += Operations.prime(op.operand);
-                       break;
+                        break;
                 }
 
                 r = r % 5000;

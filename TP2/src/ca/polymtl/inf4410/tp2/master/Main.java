@@ -37,8 +37,10 @@ public class Main {
                 config.setServers(servers);
                 config.setConfigFile(configFile);
             }
-
-            instance = new MasterSafe(config);
+            if(config.isSafeMode())
+            	instance = new MasterSafe(config);
+            else
+            	instance = new MasterUnsafe(config);
 
         } catch (Exception e) {
             e.printStackTrace();

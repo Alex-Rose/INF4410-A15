@@ -20,7 +20,8 @@ public class Worker implements ServerInterface {
 
     private WorkerConfig config;
     
-    private Random rand;
+    private Random rand = new Random();
+    private Random randMalice = new Random();
 
     public Worker(WorkerConfig config) {
         this.config = config;
@@ -53,14 +54,27 @@ public class Worker implements ServerInterface {
                     case "fib":
                         System.out.println("Executing fib " + op.operand);
                         r += Operations.fib(op.operand);
-                    case "prime":
+                        break;
+                   case "prime":
                         System.out.println("Executing prime " + op.operand);
                         r += Operations.prime(op.operand);
+                       break;
                 }
 
                 r = r % 5000;
             }
-
+            
+            int malice = this.config.getMalice();
+            if(malice > 0)
+            {
+            	int maliceNumber = randMalice.nextInt(100 + 1);
+            	if(maliceNumber <= malice)
+            	{
+            		r += maliceNumber;
+            		r = r % 5000;
+            	}
+            }
+            
             System.out.println("Processed " + operations.size() + " operations");
             return r;
         } else {

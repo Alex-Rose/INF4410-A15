@@ -1,4 +1,4 @@
-fib 20
+fib 15
 fib 10
 fib 5
-fib 30
+fib 20

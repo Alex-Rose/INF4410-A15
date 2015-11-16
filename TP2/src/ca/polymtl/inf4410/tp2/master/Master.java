@@ -111,6 +111,7 @@ public abstract class Master {
         public int size;
         public AtomicInteger result;
         public boolean terminated;
+        public boolean failed;
         public int processedOps;
 
         public Lock operationLock;
@@ -148,6 +149,8 @@ public abstract class Master {
          * This is a default implementation but it can be overridden by children
          */
         protected void handleFailure() {
+            this.failed = true;
+
             System.out.println("Worker " + index + " died");
             operationLock.lock();
 

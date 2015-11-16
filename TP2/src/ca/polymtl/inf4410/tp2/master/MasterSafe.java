@@ -75,16 +75,40 @@ public class MasterSafe extends Master {
     }
 
     protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
-        // just give it all to another one
+        // Redispatch evenly
         System.out.println("Worker " + index + " is handing over " + remainingOp.length + " tasks");
-        int next = (index + 1) % serverStubs.size();
-        
-        if (next != index) {
-            //result.addAndGet(runners.get(index).result.get());
-            runners.get(next).addOperations(remainingOp);
+
+        List<Runner> remainingRunners = new ArrayList<>();
+        for (Runner runner : runners) {
+            if (!runner.failed) {
+                remainingRunners.add(runner);
+            }
+        }
+
+        int count = remainingRunners.size();
+
+        if (count > 0) {
+            int size = remainingOp.length / count;
+
+            for (int i = 0; i < count; i++) {
+                Runner runner = remainingRunners.get(i);
+                int batchSize = i == count - 1 ? size + remainingOp.length % count : size;
+
+                int begin = i * size;
+                int end = begin + batchSize;
+
+                List<Operation> newBatch = new ArrayList<>();
+                for (int j = begin; j < end; j++) newBatch.add(remainingOp[j]);
+
+                runner.addOperations(newBatch.toArray(new Operation[0]));
+
+                if (runner.terminated) {
+                    runner.start();
+                }
+            }
         } else {
             // Crash and burn
-            System.out.println("Last node just died.");
+            System.err.println("Last node just died. Cannot continue.");
         }
     }
 
@@ -149,7 +173,9 @@ public class MasterSafe extends Master {
         }
 
         protected void handleFailure() {
+            this.failed = true;
             System.out.println("Worker " + index + " died");
+
             operationLock.lock();
             terminated = true;
             while (pendingOperations.size() > 0) {

@@ -21,6 +21,7 @@ public abstract class Master {
 	protected ArrayList<ServerInterface> serverStubs;
     protected ArrayList<Runner> runners;
 	protected ArrayList<Operation> operations;
+    protected ConcurrentLinkedQueue<Operation> operationQueue;
     protected MasterConfig config;
     protected long startMaster;
     protected long stopMaster;
@@ -49,7 +50,7 @@ public abstract class Master {
      * This has to be implemented and can be overridden by children
      * to work with dispatch strategy
      */
-    abstract protected void alertWorkerDisconnected(int index, Operation[] remainingOp);
+    abstract protected void alertWorkerDisconnected(int index);
 
     /**
      * @param config configuration to be used with this instance
@@ -61,8 +62,17 @@ public abstract class Master {
         this.config = config;
 
         populateOperations();
+        validateConfig();
         initializeServerStubs();
         dispatchWork();
+    }
+
+    private void validateConfig() {
+        int max = operations.size() / config.getServers().size();
+        if (config.getBatchSize() > max) {
+            System.out.println("Batch size can't be more than [operations]/[workers]. Enforcing limit " + max);
+            config.setBatchSize(max);
+        }
     }
 
     /**
@@ -98,6 +108,8 @@ public abstract class Master {
             Operation operation = new Operation(splitLine[0], Integer.parseInt(splitLine[1]));
             operations.add(operation);
         }
+
+        operationQueue = new ConcurrentLinkedQueue<Operation>(operations);
     }
 
     /**
@@ -107,7 +119,6 @@ public abstract class Master {
     protected abstract class Runner extends Thread{
 
         public final int index;
-        public ConcurrentLinkedQueue<Operation> operationPool;
         public ConcurrentLinkedQueue<Operation> pendingOperations;
         public ServerInterface worker;
         public int size;
@@ -115,8 +126,6 @@ public abstract class Master {
         public boolean terminated;
         public boolean failed;
         public int processedOps;
-
-        public Lock operationLock;
 
         /**
          * Work to be done by each worker when they complete
@@ -128,14 +137,11 @@ public abstract class Master {
 
         /**
          * @param index unique ID of this worker
-         * @param operationPool list of operations to execute
          * @param size initial batch size to request
          * @param worker remote worker stub
          */
-        public Runner(int index, List<Operation> operationPool, int size, ServerInterface worker) {
-            this.operationPool = new ConcurrentLinkedQueue<>(operationPool);
+        public Runner(int index, int size, ServerInterface worker) {
             this.pendingOperations = new ConcurrentLinkedQueue<>();
-            this.operationLock = new ReentrantLock();
             this.size = size;
             this.result = new AtomicInteger();
             this.result.set(0);
@@ -152,28 +158,23 @@ public abstract class Master {
          */
         protected void handleFailure() {
             this.failed = true;
+            terminated = true;
 
             System.out.println("Worker " + index + " died");
-            operationLock.lock();
 
             while (pendingOperations.size() > 0) {
-                operationPool.add(pendingOperations.poll());
+                operationQueue.add(pendingOperations.poll());
             }
 
-            operationLock.unlock();
-
-            alertWorkerDisconnected(index, operationPool.toArray(new Operation[0]));
+            alertWorkerDisconnected(index);
         }
 
         /**
-         * Add new operations to the current queue
-         *
-         * @param newOps new operations to be added
+         * Action taken when an operation is rejected.
+         * Default is nothing: pending ops will be resent as is
          */
-        public void addOperations(Operation[] newOps) {
-            operationLock.lock();
-            operationPool.addAll(Arrays.asList(newOps));
-            operationLock.unlock();
+        protected void retryStrategy() {
+
         }
     }
 

@@ -27,6 +27,7 @@ public class MasterConfig extends Config {
     private ArrayList<Pair<String, String>> servers;
     private String configFile;
     private int rmiPort;
+    private int batchSize;
 
     public static MasterConfig readFromFile(String path) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -38,6 +39,7 @@ public class MasterConfig extends Config {
         config.configFile = getValue(doc, "configFile");
         config.servers = getPairList(doc, "servers", "host", "name");
         config.rmiPort = getIntegerValue(doc, "rmiPort");
+        config.batchSize = getIntegerValue(doc, "batchSize");
 
         return config;
     }
@@ -63,6 +65,10 @@ public class MasterConfig extends Config {
 
         child = doc.createElement("rmiPort");
         child.appendChild(doc.createTextNode(Integer.toString(rmiPort)));
+        root.appendChild(child);
+
+        child = doc.createElement("batchSize");
+        child.appendChild(doc.createTextNode(Integer.toString(batchSize)));
         root.appendChild(child);
 
         child = doc.createElement("servers");
@@ -106,6 +112,10 @@ public class MasterConfig extends Config {
         }
 
         if (cfg.rmiPort != this.rmiPort) {
+            return false;
+        }
+
+        if (cfg.batchSize != this.batchSize) {
             return false;
         }
 
@@ -156,5 +166,13 @@ public class MasterConfig extends Config {
 
     public void setRmiPort(int rmiPort) {
         this.rmiPort = rmiPort;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
     }
 }

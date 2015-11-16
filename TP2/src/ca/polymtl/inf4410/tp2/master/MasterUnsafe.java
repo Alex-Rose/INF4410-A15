@@ -35,17 +35,13 @@ public class MasterUnsafe extends Master {
         int count = serverStubs.size();
 
         for (int i = 0; i < count; i++) {
-            Runner r = new RunnerUnsafe(i, operations, 100, serverStubs.get(i));
+            Runner r = new RunnerUnsafe(i, operations, 10, serverStubs.get(i));
             r.start();
             runners.add(r);
         }
     }
 
     protected void completeRunnerExecution(int index) {
-    	
-    	result.addAndGet(runners.get(index).result.get());
-        result.updateAndGet(operand -> operand % 5000);
-
         // Check if last to finish
         // This should be synchronized somehow
         boolean last = true;
@@ -59,13 +55,12 @@ public class MasterUnsafe extends Master {
 
         if (last) {
         	HashMap <Integer, Integer> results = new HashMap<Integer, Integer>(); 
-        	
+
         	for(int i = 0; i < runners.size(); ++i)
         	{
         		int result = runners.get(i).result.get();
         		int count = results.containsKey(result) ? results.get(result) : 0;
-        		results.put(result, ++count );
-        		
+        		results.put(result, count + 1 );
         	}
         	
         	int finalAnwser = -1;
@@ -81,15 +76,7 @@ public class MasterUnsafe extends Master {
     }
 
     protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
-        // just give it all to another one
-        int next = (index + 1) % serverStubs.size();
-
-        if (next != index) {
-            runners.get(next).addOperations(remainingOp);
-        } else {
-            // Crash and burn
-            System.out.println("Last node just died.");
-        }
+        System.out.println("A node just died.");
     }
 
     protected class RunnerUnsafe extends Runner {
@@ -100,20 +87,11 @@ public class MasterUnsafe extends Master {
         @Override
         public void run() {
             try {
-            	int rerun = 0;
                 while (!operationPool.isEmpty()) {
                 	
                     if (pendingOperations.isEmpty()) {
                         for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                        	if(rerun>0)
-                        	{
-                        		i += rerun;
-                        		pendingOperations.add(operationPool.poll());
-                        	}
-                        	else
-                        	{
-                        		pendingOperations.add(operationPool.poll());
-                        	}
+                            pendingOperations.add(operationPool.poll());
                         }
                     }
                     
@@ -122,8 +100,6 @@ public class MasterUnsafe extends Master {
                     for (Iterator<Operation> it = pendingOperations.iterator(); it.hasNext(); ) {
                         batch.add(it.next());
                     }
-                    System.out.println("size : "+ batch.size() + " rerun : " + rerun);
-
 
                     try {
                         long start = System.nanoTime();
@@ -131,6 +107,7 @@ public class MasterUnsafe extends Master {
                         long stop = System.nanoTime();
 
                         result.addAndGet(res);
+                        result.updateAndGet(operand -> operand % 5000);
 
                         int batchSize = batch.size();
                         System.out.println("Worker " + index + " processed operations " + processedOps + " through " + (processedOps + batchSize - 1) + " (" + batchSize + " ops) - took " + (stop - start) / 1000000 + " ms - result : " +res);
@@ -138,12 +115,8 @@ public class MasterUnsafe extends Master {
                         processedOps += batchSize;
                         pendingOperations.clear();
                     } catch (RequestRejectedException e) {
-                    	//System.out.println(e);
-                    	Operation[] arr = new Operation[batch.size()];
-                    	arr = batch.toArray(arr);
-                    	runners.get(index).addOperations(arr);
-                    	++rerun;
-                    	pendingOperations.clear();
+                        System.out.println("Operation rejected");
+                    	retryStrategy();
                     }
                 }
 
@@ -161,8 +134,10 @@ public class MasterUnsafe extends Master {
         }
 
         protected void handleFailure() {
+            failed = true;
             System.out.println("Worker " + index + " died");
             operationLock.lock();
+            terminated = true;
 
             while (pendingOperations.size() > 0) {
                 operationPool.add(pendingOperations.poll());

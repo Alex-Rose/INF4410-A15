@@ -173,6 +173,14 @@ public abstract class Master {
             operationPool.addAll(Arrays.asList(newOps));
             operationLock.unlock();
         }
+
+        /**
+         * Action taken when an operation is rejected.
+         * Default is nothing: pending ops will be resent as is
+         */
+        protected void retryStrategy() {
+
+        }
     }
 
 

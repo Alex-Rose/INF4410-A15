@@ -161,10 +161,6 @@ public class MasterSafe extends Master {
                 handleFailure();
             }
         }
-        
-        protected void retryStrategy() {
-
-        }
 
         protected void completeWork() {
             System.out.println("Worker " + index + " completed work");

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-  <safeMode>true</safeMode>
+  <safeMode>false</safeMode>
   <operationFile>donnees/donnees-4172.txt</operationFile>
   <configFile>file.xml</configFile>
   <rmiPort>1099</rmiPort>

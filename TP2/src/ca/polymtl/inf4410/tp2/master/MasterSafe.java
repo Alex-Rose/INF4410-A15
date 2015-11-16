@@ -134,7 +134,6 @@ public class MasterSafe extends Master {
 
             } catch (RemoteException e) {
                 e.printStackTrace();
-                terminated = true;
                 handleFailure();
             }
         }
@@ -145,6 +144,7 @@ public class MasterSafe extends Master {
 
         protected void completeWork() {
             System.out.println("Worker " + index + " completed work");
+            terminated = true;
             completeRunnerExecution(index);
         }
 

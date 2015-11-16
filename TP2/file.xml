@@ -4,5 +4,6 @@
   <operationFile>donnees/donnees-4172.txt</operationFile>
   <configFile>file.xml</configFile>
   <rmiPort>1099</rmiPort>
+  <batchSize>10</batchSize>
   <servers><server><host>localhost</host><name>ComputationUnit</name></server><server><host>localhost</host><name>ComputationUnit3</name></server><server><host>localhost</host><name>ComputationUnit</name></server></servers>
 </Configuration>

@@ -1,25 +1,16 @@
 package ca.polymtl.inf4410.tp2.master;
 
-import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.Operation;
 import ca.polymtl.inf4410.tp2.shared.RequestRejectedException;
 import ca.polymtl.inf4410.tp2.shared.ServerInterface;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
-import com.sun.javafx.collections.MappingChange.Map;
 
 /**
  * @author Alexandre on 11/14/2015.
@@ -35,7 +26,7 @@ public class MasterUnsafe extends Master {
         int count = serverStubs.size();
 
         for (int i = 0; i < count; i++) {
-            Runner r = new RunnerUnsafe(i, operations, 10, serverStubs.get(i));
+            Runner r = new RunnerUnsafe(i, 10, serverStubs.get(i));
             r.start();
             runners.add(r);
         }
@@ -75,23 +66,25 @@ public class MasterUnsafe extends Master {
         }
     }
 
-    protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
+    protected void alertWorkerDisconnected(int index) {
         System.out.println("A node just died.");
     }
 
     protected class RunnerUnsafe extends Runner {
-        public RunnerUnsafe(int index, List<Operation> operationPool, int size, ServerInterface worker) {
-            super(index, operationPool, size, worker);
+        private ConcurrentLinkedQueue<Operation> privateOpQueue;
+        public RunnerUnsafe(int index, int size, ServerInterface worker) {
+            super(index, size, worker);
+            privateOpQueue = new ConcurrentLinkedQueue<>(operationQueue);
         }
 
         @Override
         public void run() {
             try {
-                while (!operationPool.isEmpty()) {
+                while (!privateOpQueue.isEmpty() || !pendingOperations.isEmpty()) {
                 	
                     if (pendingOperations.isEmpty()) {
-                        for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                            pendingOperations.add(operationPool.poll());
+                        for (int i = 0; i < size && !privateOpQueue.isEmpty(); i++) {
+                            pendingOperations.add(privateOpQueue.poll());
                         }
                     }
                     
@@ -135,23 +128,10 @@ public class MasterUnsafe extends Master {
 
         protected void handleFailure() {
             failed = true;
-            System.out.println("Worker " + index + " died");
-            operationLock.lock();
             terminated = true;
+            System.out.println("Worker " + index + " died");
 
-            while (pendingOperations.size() > 0) {
-                operationPool.add(pendingOperations.poll());
-            }
-
-            operationLock.unlock();
-
-            alertWorkerDisconnected(index, operationPool.toArray(new Operation[0]));
-        }
-
-        public void addOperations(Operation[] remainingOp) {
-            operationLock.lock();
-            operationPool.addAll(Arrays.asList(remainingOp));
-            operationLock.unlock();
+            alertWorkerDisconnected(index);
         }
     }
 

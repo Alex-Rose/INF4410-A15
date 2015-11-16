@@ -34,11 +34,8 @@ public class Main {
             if (configFile != null) {
                 config = MasterConfig.readFromFile(configFile);
             } else {
-                config = new MasterConfig();
-                config.setOperationFile(operationFile);
-                config.setSafeMode(safeMode);
-                config.setServers(servers);
-                config.setConfigFile(configFile);
+                System.err.println("Un fichier de configuration est necessaire");
+                return;
             }
             if(config.isSafeMode())
             	instance = new MasterSafe(config);
@@ -61,27 +58,6 @@ public class Main {
             if (args[i].equals("-f") || args[i].equals("--file")) {
                 if (++i < args.length) {
                     operationFile = args[i];
-                } else {
-                    throw new Exception("Invalid arguments");
-                }
-            }
-            // Servers general
-            else if (args[i].equals("-s") || args[i].equals("--servers")) {
-                if (++i < args.length) {
-                    for (String s : args[i].split(",")) {
-                        servers.add(new Pair<>(s, "ComputationUnit"));
-                    }
-                } else {
-                    throw new Exception("Invalid arguments");
-                }
-            }
-            // Servers labo l4712
-            else if (args[i].equals("-l") || args[i].equals("--labo")) {
-                if (++i < args.length) {
-                    for (String s : args[i].split(",")) {
-                        int nb = Integer.parseInt(s);
-                        servers.add(new Pair<>(String.format("l4712-%02d.info.polymtl.ca", nb), "ComputationUnit"));
-                    }
                 } else {
                     throw new Exception("Invalid arguments");
                 }

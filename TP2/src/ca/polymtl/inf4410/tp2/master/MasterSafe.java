@@ -1,22 +1,15 @@
 package ca.polymtl.inf4410.tp2.master;
 
-import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.Operation;
 import ca.polymtl.inf4410.tp2.shared.RequestRejectedException;
 import ca.polymtl.inf4410.tp2.shared.ServerInterface;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Alexandre on 11/14/2015.
@@ -31,14 +24,8 @@ public class MasterSafe extends Master {
         int count = serverStubs.size();
 
         if (count > 0) {
-            int size = operations.size() / count;
-
             for (int i = 0; i < count; i++) {
-                int batchSize = i == count - 1 ? size + operations.size() % count : size;
-
-                int begin = i * size;
-                int end = begin + batchSize;
-                Runner r = new RunnerSafe(i, operations.subList(i * size, end), 10, serverStubs.get(i));
+                Runner r = new RunnerSafe(i, config.getBatchSize(), serverStubs.get(i));
                 r.start();
                 runners.add(r);
             }
@@ -74,10 +61,8 @@ public class MasterSafe extends Master {
         }
     }
 
-    protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
+    protected void alertWorkerDisconnected(int index) {
         // Redispatch evenly
-        System.out.println("Worker " + index + " is handing over " + remainingOp.length + " tasks");
-
         List<Runner> remainingRunners = new ArrayList<>();
         for (Runner runner : runners) {
             if (!runner.failed) {
@@ -88,21 +73,12 @@ public class MasterSafe extends Master {
         int count = remainingRunners.size();
 
         if (count > 0) {
-            int size = remainingOp.length / count;
-
             for (int i = 0; i < count; i++) {
                 Runner runner = remainingRunners.get(i);
-                int batchSize = i == count - 1 ? size + remainingOp.length % count : size;
-
-                int begin = i * size;
-                int end = begin + batchSize;
-
-                List<Operation> newBatch = new ArrayList<>();
-                for (int j = begin; j < end; j++) newBatch.add(remainingOp[j]);
-
-                runner.addOperations(newBatch.toArray(new Operation[0]));
 
                 if (runner.terminated) {
+                    System.out.println("Restarting runner " + i + " to take over remaining operations");
+                    runner = new RunnerSafe(i, config.getBatchSize(), serverStubs.get(i));
                     runner.start();
                 }
             }
@@ -113,18 +89,18 @@ public class MasterSafe extends Master {
     }
 
     protected class RunnerSafe extends Runner {
-        public RunnerSafe(int index, List<Operation> operationPool, int size, ServerInterface worker) {
-            super(index, operationPool, size, worker);
+        public RunnerSafe(int index, int size, ServerInterface worker) {
+            super(index, size, worker);
         }
 
         @Override
         public void run() {
             try {
-                while (!operationPool.isEmpty()) {
+                while (!operationQueue.isEmpty() || !pendingOperations.isEmpty()) {
 
                     if (pendingOperations.isEmpty()) {
-                        for (int i = 0; i < size && !operationPool.isEmpty(); i++) {
-                            pendingOperations.add(operationPool.poll());
+                        for (int i = 0; i < size && !operationQueue.isEmpty(); i++) {
+                            pendingOperations.add(operationQueue.poll());
                         }
                     }
 
@@ -166,27 +142,6 @@ public class MasterSafe extends Master {
             System.out.println("Worker " + index + " completed work");
             terminated = true;
             completeRunnerExecution(index);
-        }
-
-        protected void handleFailure() {
-            this.failed = true;
-            System.out.println("Worker " + index + " died");
-
-            operationLock.lock();
-            terminated = true;
-            while (pendingOperations.size() > 0) {
-                operationPool.add(pendingOperations.poll());
-            }
-
-            operationLock.unlock();
-
-            alertWorkerDisconnected(index, operationPool.toArray(new Operation[0]));
-        }
-
-        public void addOperations(Operation[] remainingOp) {
-            operationLock.lock();
-            operationPool.addAll(Arrays.asList(remainingOp));
-            operationLock.unlock();
         }
     }
 

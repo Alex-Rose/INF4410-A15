@@ -20,6 +20,7 @@ public class MasterUnsafe extends Master {
 	
     public MasterUnsafe(MasterConfig config) throws IOException {
         super(config);
+        startMaster = System.nanoTime();
     }
 
     protected void dispatchWork() {
@@ -61,8 +62,8 @@ public class MasterUnsafe extends Master {
         			finalAnwser = entry.getKey();
         	}
         	
-        	
-            System.out.println("Result is " + finalAnwser);
+        	stopMaster = System.nanoTime();
+            System.out.println("Result is " + finalAnwser + " took " +  (stopMaster - startMaster) / 1000000 + " ms");
         }
     }
 

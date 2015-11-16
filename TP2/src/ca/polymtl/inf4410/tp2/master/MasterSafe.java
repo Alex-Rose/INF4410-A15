@@ -59,7 +59,7 @@ public class MasterSafe extends Master {
 
             int total = result.get() % 5000;
             stopMaster = System.nanoTime();
-            System.out.println("Result is " + total + "took " +  (stopMaster - startMaster) / 1000000 + " ms");
+            System.out.println("Result is " + total + " took " +  (stopMaster - startMaster) / 1000000 + " ms");
             
         }
     }

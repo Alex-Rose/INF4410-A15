@@ -34,7 +34,7 @@ public class Worker implements ServerInterface {
 
             Registry registry = LocateRegistry.getRegistry(config.getRmiPort());
             registry.rebind(config.getName(), stub);
-            System.out.println("Server ready.");
+            System.out.println(config.getName() + " ready.");
         } catch (ConnectException e) {
             System.err.println("Impossible de se connecter au registre RMI. Est-ce que rmiregistry est lance ?");
             System.err.println();

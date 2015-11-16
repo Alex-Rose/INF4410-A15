@@ -61,26 +61,27 @@ public class MasterSafe extends Master {
         }
 
         if (last) {
-        	int total = 0;
+            System.out.println("Last runner computing final result");
+
         	for(int i = 0; i < runners.size(); ++i)
         	{
-        		total += runners.get(i).result.get();
+                System.out.println("Runner " + i + " had a result of " + runners.get(i).result.get());
+        		result.addAndGet(runners.get(i).result.get());
         	}
 
-            total = total % 5000;
+            int total = result.get() % 5000;
             System.out.println("Result is " + total);
         }
     }
 
     protected void alertWorkerDisconnected(int index, Operation[] remainingOp) {
         // just give it all to another one
+        System.out.println("Worker " + index + " is handing over " + remainingOp.length + " tasks");
         int next = (index + 1) % serverStubs.size();
         
         if (next != index) {
-        	List<Operation> list = new ArrayList<Operation>(Arrays.asList(remainingOp));
-        	Runner r = new RunnerSafe(runners.size(), list, 100, serverStubs.get(next));
-            r.start();
-            runners.add(r);
+            //result.addAndGet(runners.get(index).result.get());
+            runners.get(next).addOperations(remainingOp);
         } else {
             // Crash and burn
             System.out.println("Last node just died.");
@@ -109,13 +110,13 @@ public class MasterSafe extends Master {
                         batch.add(it.next());
                     }
 
-
                     try {
                         long start = System.nanoTime();
                         int res = worker.executeOperations(batch);
                         long stop = System.nanoTime();
 
                         result.addAndGet(res);
+                        result.updateAndGet(operand -> operand % 5000);
 
                         int batchSize = batch.size();
                         System.out.println("Worker " + index + " processed operations " + processedOps + " through " + (processedOps + batchSize - 1) + " (" + batchSize + " ops) - took " + (stop - start) / 1000000 + " ms - result : " +res);
@@ -126,12 +127,14 @@ public class MasterSafe extends Master {
                     	System.out.println("Operation rejected");
                         retryStrategy();
                     }
+
                 }
 
                 completeWork();
 
             } catch (RemoteException e) {
                 e.printStackTrace();
+                terminated = true;
                 handleFailure();
             }
         }
@@ -142,7 +145,6 @@ public class MasterSafe extends Master {
 
         protected void completeWork() {
             System.out.println("Worker " + index + " completed work");
-            terminated = true;
             completeRunnerExecution(index);
         }
 

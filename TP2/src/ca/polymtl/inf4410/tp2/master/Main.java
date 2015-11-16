@@ -1,10 +1,13 @@
 package ca.polymtl.inf4410.tp2.master;
 
+import javafx.util.Pair;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.IntSummaryStatistics;
 
 /**
  * @author Alexandre on 11/12/2015.
@@ -13,7 +16,7 @@ public class Main {
     public static Master instance;
     public static String operationFile;
     public static boolean safeMode;
-    public static ArrayList<String> servers;
+    public static ArrayList<Pair<String, String>> servers;
     public static String configFile;
 
     public static void main(String[] args){
@@ -49,7 +52,7 @@ public class Main {
 
     private static void parseArguments(String[] args) throws Exception {
         safeMode = false;
-        servers = new ArrayList<String>();
+        servers = new ArrayList<>();
         operationFile = null;
         configFile = null;
 
@@ -66,7 +69,7 @@ public class Main {
             else if (args[i].equals("-s") || args[i].equals("--servers")) {
                 if (++i < args.length) {
                     for (String s : args[i].split(",")) {
-                        servers.add(s);
+                        servers.add(new Pair<>(s, "ComputationUnit"));
                     }
                 } else {
                     throw new Exception("Invalid arguments");
@@ -77,7 +80,7 @@ public class Main {
                 if (++i < args.length) {
                     for (String s : args[i].split(",")) {
                         int nb = Integer.parseInt(s);
-                        servers.add(String.format("l4712-%02d.info.polymtl.ca", nb));
+                        servers.add(new Pair<>(String.format("l4712-%02d.info.polymtl.ca", nb), "ComputationUnit"));
                     }
                 } else {
                     throw new Exception("Invalid arguments");

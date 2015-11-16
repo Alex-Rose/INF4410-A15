@@ -25,6 +25,7 @@ public class WorkerConfig extends Config {
     private int port;
     private int capacity;
     private int malice;
+    private int rmiPort;
 
     public static WorkerConfig readFromFile(String path) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -35,6 +36,7 @@ public class WorkerConfig extends Config {
         config.port = getIntegerValue(doc, "port");
         config.capacity = getIntegerValue(doc, "capacity");
         config.malice = getIntegerValue(doc, "malice");
+        config.rmiPort = getIntegerValue(doc, "rmiPort");
 
         return config;
     }
@@ -52,6 +54,10 @@ public class WorkerConfig extends Config {
 
         child = doc.createElement("port");
         child.appendChild(doc.createTextNode(Integer.toString(port)));
+        root.appendChild(child);
+
+        child = doc.createElement("rmiPort");
+        child.appendChild(doc.createTextNode(Integer.toString(rmiPort)));
         root.appendChild(child);
 
         child = doc.createElement("capacity");
@@ -90,6 +96,10 @@ public class WorkerConfig extends Config {
         }
 
         if (cfg.malice != this.malice) {
+            return false;
+        }
+
+        if (cfg.rmiPort != this.rmiPort) {
             return false;
         }
 
@@ -134,5 +144,13 @@ public class WorkerConfig extends Config {
 
     public void setConfigFile(String configFile) {
         this.configFile = configFile;
+    }
+
+    public int getRmiPort() {
+        return rmiPort;
+    }
+
+    public void setRmiPort(int rmiPort) {
+        this.rmiPort = rmiPort;
     }
 }

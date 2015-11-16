@@ -3,7 +3,6 @@
   <safeMode>true</safeMode>
   <operationFile>donnees/donnees-4172.txt</operationFile>
   <configFile>file.xml</configFile>
-  <workerName>ComputationUnit</workerName>
   <rmiPort>1099</rmiPort>
-  <servers><server>L4712-08.info.polymtl.ca</server><server>L4712-05.info.polymtl.ca</server><server>localhost</server></servers>
+  <servers><server><host>localhost</host><name>ComputationUnit</name></server><server><host>localhost</host><name>ComputationUnit2</name></server><server><host>localhost</host><name>ComputationUnit</name></server></servers>
 </Configuration>

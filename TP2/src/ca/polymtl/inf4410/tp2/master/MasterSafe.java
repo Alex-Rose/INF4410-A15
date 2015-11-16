@@ -48,20 +48,11 @@ public class MasterSafe extends Master {
     }
 
     protected void completeRunnerExecution(int index) {
-        //result.addAndGet(runners.get(index).result.get());
-       // result.updateAndGet(operand -> operand % 5000);
 
         // Check if last to finish
         // This should be synchronized somehow
         boolean last = true;
- /*       for (int i = 0; i < runners.size(); i++) {
-            if (index == i) continue;
 
-            if (!runners.get(i).terminated) {
-                last = false;
-                break;
-            }
-        }*/
         for (int i = 0; i < runners.size(); i++) {
         	 if (!runners.get(i).terminated) {
                  last = false;
@@ -75,8 +66,9 @@ public class MasterSafe extends Master {
         	{
         		total += runners.get(i).result.get();
         	}
-            //System.out.println("Result is " + result);
-            System.out.println("Result is " + total%5000);
+
+            total = total % 5000;
+            System.out.println("Result is " + total);
         }
     }
 
@@ -132,6 +124,7 @@ public class MasterSafe extends Master {
                         pendingOperations.clear();
                     } catch (RequestRejectedException e) {
                     	System.out.println("Operation rejected");
+                        retryStrategy();
                     }
                 }
 
@@ -143,9 +136,12 @@ public class MasterSafe extends Master {
             }
         }
         
-        
+        protected void retryStrategy() {
+
+        }
 
         protected void completeWork() {
+            System.out.println("Worker " + index + " completed work");
             terminated = true;
             completeRunnerExecution(index);
         }

@@ -2,6 +2,7 @@ package ca.polymtl.inf4410.tp2.tests;
 
 import ca.polymtl.inf4410.tp2.master.Master;
 import ca.polymtl.inf4410.tp2.master.MasterConfig;
+import javafx.util.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,16 +37,15 @@ public class MasterConfigTest {
     public void testEquals() throws Exception {
         MasterConfig config = new MasterConfig();
 
-        ArrayList<String> servers = new ArrayList<String>();
-        servers.add("test1");
-        servers.add("test2");
-        servers.add("test2");
+        ArrayList<Pair<String, String>> servers = new ArrayList<Pair<String, String>>();
+        servers.add(new Pair<>("test1", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
 
         config.setSafeMode(false);
         config.setConfigFile("file.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
-        config.setWorkerName("worker");
         config.setRmiPort(1099);
 
         MasterConfig config2 = new MasterConfig();
@@ -54,7 +54,6 @@ public class MasterConfigTest {
         config2.setConfigFile("file.xml");
         config2.setOperationFile("lol.op");
         config2.setServers(servers);
-        config2.setWorkerName("worker");
         config2.setRmiPort(1099);
 
         assertTrue(config.equals(config2));
@@ -81,10 +80,11 @@ public class MasterConfigTest {
     @Test
     public void testGetServers() throws Exception {
         MasterConfig config = new MasterConfig();
-        ArrayList<String> servers = new ArrayList<String>();
-        servers.add("test1");
-        servers.add("test2");
-        servers.add("test2");
+        ArrayList<Pair<String, String>> servers = new ArrayList<Pair<String, String>>();
+        servers.add(new Pair<>("test1", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
+
         config.setServers(servers);
         assertArrayEquals(servers.toArray(), config.getServers().toArray());
     }
@@ -98,13 +98,6 @@ public class MasterConfigTest {
     }
 
     @Test
-    public void testGetWorkerName() throws Exception {
-        MasterConfig config = new MasterConfig();
-        String name = "werker";
-        config.setWorkerName(name);
-        assertEquals(name, config.getWorkerName());
-    }
-
     public void testGetRmiPort() throws Exception {
         MasterConfig config = new MasterConfig();
         int port = 1091;
@@ -116,16 +109,15 @@ public class MasterConfigTest {
     public void testReadWrite() throws Exception {
         MasterConfig config = new MasterConfig();
 
-        ArrayList<String> servers = new ArrayList<String>();
-        servers.add("test1");
-        servers.add("test2");
-        servers.add("test2");
+        ArrayList<Pair<String, String>> servers = new ArrayList<Pair<String, String>>();
+        servers.add(new Pair<>("test1", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
+        servers.add(new Pair<>("test2", "Worker"));
 
         config.setSafeMode(false);
         config.setConfigFile("file.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
-        config.setWorkerName("worker");
         config.setRmiPort(1099);
         config.writeToFile(filePath);
 

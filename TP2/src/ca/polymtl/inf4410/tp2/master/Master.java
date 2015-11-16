@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.*;
+import javafx.util.Pair;
 
 public abstract class Master {
 	protected ArrayList<ServerInterface> serverStubs;
@@ -24,10 +25,34 @@ public abstract class Master {
 
     protected AtomicInteger result;
 
+    /**
+     * Dispatch operations between all workers.
+     *
+     * This has to be implemented and can be overridden by children
+     * to change strategy
+     */
     abstract protected void dispatchWork();
+
+    /**
+     * Work to be done by each worker when they complete
+     *
+     * This has to be implemented and can be overridden by children
+     * to work with dispatch strategy
+     */
     abstract protected void completeRunnerExecution(int index);
+
+    /**
+     * Work to be done when a worker disconnects
+     *
+     * This has to be implemented and can be overridden by children
+     * to work with dispatch strategy
+     */
     abstract protected void alertWorkerDisconnected(int index, Operation[] remainingOp);
 
+    /**
+     * @param config configuration to be used with this instance
+     * @throws IOException
+     */
     public Master(MasterConfig config) throws IOException {
         result = new AtomicInteger();
         runners = new ArrayList<>();
@@ -38,14 +63,17 @@ public abstract class Master {
         dispatchWork();
     }
 
+    /**
+     * Initiate connections to remote workers
+     */
     protected void initializeServerStubs(){
 		serverStubs = new ArrayList<ServerInterface>();
-        ArrayList<String> servers = config.getServers();
+        ArrayList<Pair<String, String>> servers = config.getServers();
 		for (int i = 0; i < servers.size(); i++){
 			ServerInterface stub = null;
 			try {
-	            Registry registry = LocateRegistry.getRegistry(servers.get(i), config.getRmiPort());
-	            stub = (ServerInterface) registry.lookup(config.getWorkerName());
+	            Registry registry = LocateRegistry.getRegistry(servers.get(i).getKey(), config.getRmiPort());
+	            stub = (ServerInterface) registry.lookup(servers.get(i).getValue());
                 serverStubs.add(stub);
 	        } catch (NotBoundException e) {
 	            System.out.println("Erreur: Le nom '" + e.getMessage() + "' n'est pas défini dans le registre.");
@@ -57,6 +85,10 @@ public abstract class Master {
 		}
 	}
 
+    /**
+     * Reads operations from file
+     * @throws IOException
+     */
     protected void populateOperations() throws IOException{
         operations = new ArrayList<Operation>();
         for (String line : Files.readAllLines(Paths.get(config.getOperationFile()))) {
@@ -66,6 +98,10 @@ public abstract class Master {
         }
     }
 
+    /**
+     * Abstract class used to implement a Thread which will be responsible
+     * for communicating with a single worker.
+     */
     protected abstract class Runner extends Thread{
 
         public final int index;
@@ -79,8 +115,20 @@ public abstract class Master {
 
         public Lock operationLock;
 
+        /**
+         * Work to be done by each worker when they complete
+         *
+         * This has to be implemented and can be overridden by children
+         * to work with dispacth strategy
+         */
         abstract protected void completeWork();
 
+        /**
+         * @param index unique ID of this worker
+         * @param operationPool list of operations to execute
+         * @param size initial batch size to request
+         * @param worker remote worker stub
+         */
         public Runner(int index, List<Operation> operationPool, int size, ServerInterface worker) {
             this.operationPool = new ConcurrentLinkedQueue<>(operationPool);
             this.pendingOperations = new ConcurrentLinkedQueue<>();
@@ -94,6 +142,11 @@ public abstract class Master {
             this.worker = worker;
         }
 
+        /**
+         * Work to be done when a worker disconnects
+         *
+         * This is a default implementation but it can be overridden by children
+         */
         protected void handleFailure() {
             System.out.println("Worker " + index + " died");
             operationLock.lock();
@@ -107,9 +160,14 @@ public abstract class Master {
             alertWorkerDisconnected(index, operationPool.toArray(new Operation[0]));
         }
 
-        public void addOperations(Operation[] remainingOp) {
+        /**
+         * Add new operations to the current queue
+         *
+         * @param newOps new operations to be added
+         */
+        public void addOperations(Operation[] newOps) {
             operationLock.lock();
-            operationPool.addAll(Arrays.asList(remainingOp));
+            operationPool.addAll(Arrays.asList(newOps));
             operationLock.unlock();
         }
     }

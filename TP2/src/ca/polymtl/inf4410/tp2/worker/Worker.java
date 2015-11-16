@@ -32,7 +32,7 @@ public class Worker implements ServerInterface {
         try {
             ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(this, config.getPort());
 
-            Registry registry = LocateRegistry.getRegistry(1099);
+            Registry registry = LocateRegistry.getRegistry(config.getRmiPort());
             registry.rebind(config.getName(), stub);
             System.out.println("Server ready.");
         } catch (ConnectException e) {
@@ -70,6 +70,7 @@ public class Worker implements ServerInterface {
             	int maliceNumber = randMalice.nextInt(100 + 1);
             	if(maliceNumber <= malice)
             	{
+                    System.out.println("Sending wrong result ¯\\_(?)_/¯");
             		r += maliceNumber;
             		r = r % 5000;
             	}

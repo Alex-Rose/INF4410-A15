@@ -1,6 +1,7 @@
 package ca.polymtl.inf4410.tp2.master;
 
 import ca.polymtl.inf4410.tp2.shared.Config;
+import javafx.util.Pair;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -23,9 +24,8 @@ import java.util.ArrayList;
 public class MasterConfig extends Config {
     private boolean safeMode;
     private String operationFile;
-    private ArrayList<String> servers;
+    private ArrayList<Pair<String, String>> servers;
     private String configFile;
-    private String workerName;
     private int rmiPort;
 
     public static MasterConfig readFromFile(String path) throws ParserConfigurationException, IOException, SAXException {
@@ -36,8 +36,7 @@ public class MasterConfig extends Config {
         config.safeMode = getBooleanValue(doc, "safeMode");
         config.operationFile = getValue(doc, "operationFile");
         config.configFile = getValue(doc, "configFile");
-        config.servers = getStringList(doc, "servers");
-        config.workerName = getValue(doc, "workerName");
+        config.servers = getPairList(doc, "servers", "host", "name");
         config.rmiPort = getIntegerValue(doc, "rmiPort");
 
         return config;
@@ -62,18 +61,19 @@ public class MasterConfig extends Config {
         child.appendChild(doc.createTextNode(operationFile));
         root.appendChild(child);
 
-        child = doc.createElement("workerName");
-        child.appendChild(doc.createTextNode(workerName));
-        root.appendChild(child);
-
         child = doc.createElement("rmiPort");
         child.appendChild(doc.createTextNode(Integer.toString(rmiPort)));
         root.appendChild(child);
 
         child = doc.createElement("servers");
-        for (String server : servers) {
+        for (Pair<String, String> server : servers) {
             Element sNode = doc.createElement("server");
-            sNode.appendChild(doc.createTextNode(server));
+            Element hostNode = doc.createElement("host");
+            hostNode.appendChild(doc.createTextNode(server.getKey()));
+            sNode.appendChild(hostNode);
+            Element portNode = doc.createElement("port");
+            portNode.appendChild(doc.createTextNode(server.getValue()));
+            sNode.appendChild(portNode);
             child.appendChild(sNode);
         }
         root.appendChild(child);
@@ -105,15 +105,11 @@ public class MasterConfig extends Config {
             return false;
         }
 
-        if (!cfg.workerName.equals(this.workerName)) {
-            return false;
-        }
-
         if (cfg.rmiPort != this.rmiPort) {
             return false;
         }
 
-        for (String server : cfg.servers) {
+        for (Pair<String, String> server : cfg.servers) {
             if (!this.servers.contains(server)){
                 return false;
             }
@@ -138,11 +134,11 @@ public class MasterConfig extends Config {
         this.operationFile = operationFile;
     }
 
-    public ArrayList<String> getServers() {
+    public ArrayList<Pair<String, String>> getServers() {
         return servers;
     }
 
-    public void setServers(ArrayList<String> servers) {
+    public void setServers(ArrayList<Pair<String, String>> servers) {
         this.servers = servers;
     }
 
@@ -152,14 +148,6 @@ public class MasterConfig extends Config {
 
     public void setConfigFile(String configFile) {
         this.configFile = configFile;
-    }
-
-    public String getWorkerName() {
-        return workerName;
-    }
-
-    public void setWorkerName(String workerName) {
-        this.workerName = workerName;
     }
 
     public int getRmiPort() {

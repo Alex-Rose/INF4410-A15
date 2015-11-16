@@ -87,9 +87,8 @@ public class Worker implements ServerInterface {
     	int capacity = config.getCapacity();
     	if(operations.size() <= capacity){
     		return true;
-    	}
-    	else{
-    		int rejectRate = (operations.size()- capacity)/(9*capacity) *100;
+    	} else {
+    		int rejectRate = (operations.size()- capacity) * 100 /(9*capacity) ;
     		int randomNumber = rand.nextInt(100 + 1);
     		if(randomNumber > rejectRate){
     			return true;

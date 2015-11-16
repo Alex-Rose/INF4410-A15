@@ -38,7 +38,7 @@ public class MasterSafe extends Master {
 
                 int begin = i * size;
                 int end = begin + batchSize;
-                Runner r = new RunnerSafe(i, operations.subList(i * size, end), 100, serverStubs.get(i));
+                Runner r = new RunnerSafe(i, operations.subList(i * size, end), 10, serverStubs.get(i));
                 r.start();
                 runners.add(r);
             }
@@ -131,19 +131,7 @@ public class MasterSafe extends Master {
                         processedOps += batchSize;
                         pendingOperations.clear();
                     } catch (RequestRejectedException e) {
-                    	System.out.println(e);
-                    	
-                    	int count = serverStubs.size();
-                    	int size = batch.size() / count;
-                    	for (int i = 0; i < count; i++) {
-                            int batchSize = i == count - 1 ? size + batch.size() % count : size;
-
-                            int begin = i * size;
-                            int end = begin + batchSize;
-                            Runner r = new RunnerSafe(runners.size(), batch.subList(i * size, end), 100, serverStubs.get(i));
-                            r.start();
-                            runners.add(r);
-                        } 
+                    	System.out.println("Operation rejected");
                     }
                 }
 

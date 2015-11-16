@@ -25,6 +25,7 @@ public class MasterSafe extends Master {
 
     public MasterSafe(MasterConfig config) throws IOException {
         super(config);
+        startMaster = System.nanoTime();
     }
 
     protected void dispatchWork() {
@@ -70,7 +71,9 @@ public class MasterSafe extends Master {
         	}
 
             int total = result.get() % 5000;
-            System.out.println("Result is " + total);
+            stopMaster = System.nanoTime();
+            System.out.println("Result is " + total + "took " +  (stopMaster - startMaster) / 1000000 + " ms");
+            
         }
     }
 

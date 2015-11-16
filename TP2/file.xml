@@ -4,5 +4,5 @@
   <operationFile>donnees/donnees-4172.txt</operationFile>
   <configFile>file.xml</configFile>
   <rmiPort>1099</rmiPort>
-  <servers><server><host>localhost</host><name>ComputationUnit</name></server><server><host>localhost</host><name>ComputationUnit3</name></server><server><host>localhost</host><name>ComputationUnit</name></server></servers>
+  <servers><server><host>L4714-02.info.polymtl.ca</host><name>ComputationUnit</name></server><server><host>L4714-03.info.polymtl.ca</host><name>ComputationUnit3</name></server><server><host>L4714-05.info.polymtl.ca</host><name>ComputationUnit2</name></server></servers>
 </Configuration>

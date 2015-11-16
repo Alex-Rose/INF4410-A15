@@ -22,6 +22,8 @@ public abstract class Master {
     protected ArrayList<Runner> runners;
 	protected ArrayList<Operation> operations;
     protected MasterConfig config;
+    protected long startMaster;
+    protected long stopMaster;
 
     protected AtomicInteger result;
 

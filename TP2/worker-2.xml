@@ -1,1 +1,1 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><Configuration><name>ComputationUnit2</name><rmiPort>1099</rmiPort><port>5002</port><capacity>10</capacity><malice>50</malice></Configuration>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><Configuration><name>ComputationUnit2</name><rmiPort>1099</rmiPort><port>5002</port><capacity>10</capacity><malice>0</malice></Configuration>

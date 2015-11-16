@@ -70,7 +70,7 @@ public class Worker implements ServerInterface {
             	int maliceNumber = randMalice.nextInt(100 + 1);
             	if(maliceNumber <= malice)
             	{
-                    System.out.println("Sending wrong result ¯\\_(?)_/¯");
+                    System.out.println("Sending wrong result");
             		r += maliceNumber;
             		r = r % 5000;
             	}

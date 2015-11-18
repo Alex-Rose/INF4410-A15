@@ -43,7 +43,7 @@ public class MasterConfigTest {
         servers.add(new Pair<>("test2", "Worker"));
 
         config.setSafeMode(false);
-        config.setConfigFile("file.xml");
+        config.setConfigFile("master.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
         config.setRmiPort(1099);
@@ -51,7 +51,7 @@ public class MasterConfigTest {
         MasterConfig config2 = new MasterConfig();
 
         config2.setSafeMode(false);
-        config2.setConfigFile("file.xml");
+        config2.setConfigFile("master.xml");
         config2.setOperationFile("lol.op");
         config2.setServers(servers);
         config2.setRmiPort(1099);
@@ -115,7 +115,7 @@ public class MasterConfigTest {
         servers.add(new Pair<>("test2", "Worker"));
 
         config.setSafeMode(false);
-        config.setConfigFile("file.xml");
+        config.setConfigFile("master.xml");
         config.setOperationFile("lol.op");
         config.setServers(servers);
         config.setRmiPort(1099);

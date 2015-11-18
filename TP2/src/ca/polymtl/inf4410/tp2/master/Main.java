@@ -102,11 +102,16 @@ public class Main {
         System.out.println("Master help file \n\n");
         System.out.println("Usage : master [parameters]\n");
         System.out.println("parameters : ");
-        System.out.println("    -f, --file     : Operation file to use ");
-        System.out.println("    -s, --servers  : Calculation units to use (full name), separated by comas");
-        System.out.println("    -l, --labo     : Calculation units number to use (machine in l4712), separated by comas");
-        System.out.println("                     separated by comas");
-        System.out.println("    -f, --safe     : Start in safe mode");
         System.out.println("    -c, --config   : Read configuration from xml file instead");
+        System.out.println("");
+        System.out.println("XML config file");
+        System.out.println("  safeMode       : Presume all workers are well intentioned");
+        System.out.println("  operationFile  : File containing operations to be executed");
+        System.out.println("  configFile     : [Deprecated] name of the config file used");
+        System.out.println("  rmiPort        : Port to connect to rmiregistry on worker's machines");
+        System.out.println("  batchSize      : Initial batch size to use");
+        System.out.println("  servers        : List of servers to use (workers)");
+        System.out.println("                   host : address of server");
+        System.out.println("                   name : object name in rmi registry");
     }
 }

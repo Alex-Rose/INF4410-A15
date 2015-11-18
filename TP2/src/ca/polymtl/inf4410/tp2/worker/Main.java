@@ -13,6 +13,7 @@ public class Main {
     public static Worker instance;
     public static String name;
     public static int port;
+    public static int rmiPort;
     public static int capacity;
     public static int malice;
     public static String configFile;
@@ -38,6 +39,7 @@ public class Main {
                 config.setPort(port);
                 config.setCapacity(capacity);
                 config.setMalice(malice);
+                config.setRmiPort(rmiPort);
             }
 
             instance = new Worker(config);
@@ -53,6 +55,7 @@ public class Main {
         port = -1;
         capacity = -1;
         malice = -1;
+        rmiPort = 1099;
 
 
         for (int i = 0; i < args.length; i++) {
@@ -80,8 +83,16 @@ public class Main {
                     throw new Exception("Invalid arguments");
                 }
             }
+            // port
+            else if (args[i].equals("-r") || args[i].equals("--rmiPort")) {
+                if (++i < args.length) {
+                    rmiPort = Integer.parseInt(args[i]);
+                } else {
+                    throw new Exception("Invalid arguments");
+                }
+            }
             // capacity
-            else if (args[i].equals("-n") || args[i].equals("--capacity")) {
+            else if (args[i].equals("-q") || args[i].equals("--capacity")) {
                 if (++i < args.length) {
                     capacity = Integer.parseInt(args[i]);
                 } else {
@@ -126,8 +137,16 @@ public class Main {
         System.out.println("parameters : ");
         System.out.println("    -n, --name     : Name of RMI object to export");
         System.out.println("    -p, --port     : Port for RMI export");
-        System.out.println("    -n, --capacity : Maximum capacity for this worker");
+        System.out.println("    -r, --rmiPort  : Port of local RMI registry");
+        System.out.println("    -q, --capacity : Maximum capacity for this worker");
         System.out.println("    -m, --malice   : Malice index for this worker");
         System.out.println("    -c, --config   : Read configuration from xml file instead");
+        System.out.println("");
+        System.out.println("XML config file");
+        System.out.println("  name           : Name to export to rmi registry");
+        System.out.println("  rmiPort        : Port of local rmi registry");
+        System.out.println("  port           : Port to bind this worker (must not be in use)");
+        System.out.println("  capacity       : Worker capacity");
+        System.out.println("  malice         : Malice of this worker (0 for always good)");
     }
 }

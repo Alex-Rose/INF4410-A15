@@ -108,6 +108,7 @@ public class MasterUnsafe extends Master {
 
                         processedOps += batchSize;
                         pendingOperations.clear();
+                        size = Math.max((int)(size * 1.5), 2);
                     } catch (RequestRejectedException e) {
                         System.out.println("Operation rejected");
                     	retryStrategy();
@@ -133,6 +134,16 @@ public class MasterUnsafe extends Master {
             System.out.println("Worker " + index + " died");
 
             alertWorkerDisconnected(index);
+        }
+
+        @Override
+        protected void retryStrategy() {
+            size = Math.max(size / 2, 1);
+            System.out.println("Reducing size to " + size);
+
+            for (int i = 0; i < pendingOperations.size() / 2; i++) {
+                privateOpQueue.add(pendingOperations.poll());
+            }
         }
     }
 

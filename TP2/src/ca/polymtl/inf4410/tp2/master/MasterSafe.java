@@ -60,7 +60,14 @@ public class MasterSafe extends Master {
             int total = result.get() % 5000;
             stopMaster = System.nanoTime();
             System.out.println("Result is " + total + " took " +  (stopMaster - startMaster) / 1000000 + " ms");
-            
+
+            try {
+                result.set(total);
+                totalTime = (stopMaster - startMaster) / 1000000;
+                saveResults();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -126,6 +133,7 @@ public class MasterSafe extends Master {
 
                         processedOps += batchSize;
                         pendingOperations.clear();
+                        size *= 1.5;
                     } catch (RequestRejectedException e) {
                     	System.out.println("Operation rejected");
                         retryStrategy();
@@ -145,6 +153,16 @@ public class MasterSafe extends Master {
             System.out.println("Worker " + index + " completed work");
             terminated = true;
             completeRunnerExecution(index);
+        }
+
+        @Override
+        protected void retryStrategy() {
+            size = Math.max(size / 2, 1);
+            System.out.println("Reducing size to " + size);
+
+            for (int i = 0; i < pendingOperations.size() / 2; i++) {
+                operationQueue.add(pendingOperations.poll());
+            }
         }
     }
 

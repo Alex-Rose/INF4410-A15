@@ -83,7 +83,27 @@ public class Worker implements ServerInterface {
             throw new RequestRejectedException();
         }
     }
-    
+
+    /**
+     * USE ONLY FOR BENCHMARKS
+     * @return malice
+     * @throws RemoteException
+     */
+    @Override
+    public int getMaliceValue() throws RemoteException {
+        return config.getMalice();
+    }
+
+    /**
+     * USE ONLY FOR BENCHMARKS
+     * @return malice
+     * @throws RemoteException
+     */
+    @Override
+    public int getCapacity() throws RemoteException {
+        return config.getCapacity();
+    }
+
     private Boolean accept(List<Operation> operations){
     	int capacity = config.getCapacity();
     	if(operations.size() <= capacity){

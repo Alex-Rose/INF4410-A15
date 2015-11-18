@@ -1,5 +1,11 @@
 package ca.polymtl.inf4410.tp2.master;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -17,6 +23,8 @@ import ca.polymtl.inf4410.tp2.operations.Operations;
 import ca.polymtl.inf4410.tp2.shared.*;
 import javafx.util.Pair;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public abstract class Master {
 	protected ArrayList<ServerInterface> serverStubs;
     protected ArrayList<Runner> runners;
@@ -25,6 +33,7 @@ public abstract class Master {
     protected MasterConfig config;
     protected long startMaster;
     protected long stopMaster;
+    protected long totalTime;
 
     protected AtomicInteger result;
 
@@ -110,6 +119,62 @@ public abstract class Master {
         }
 
         operationQueue = new ConcurrentLinkedQueue<Operation>(operations);
+    }
+
+    //http://www.mkyong.com/java/how-to-send-http-request-getpost-in-java/
+    protected void saveResults() throws Exception {
+        String url = "http://step.polymtl.ca/~alexrose/inf4410.php";
+        URL obj = new URL(url);
+//        HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+        //add reuqest header
+        con.setRequestMethod("POST");
+        con.setRequestProperty("User-Agent", "java_truie/1.1");
+        con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+        String urlParameters = "safe=" + (config.isSafeMode() ? "1" : "0");
+        urlParameters += "&batch_size=" + config.getBatchSize();
+        urlParameters += "&file=" + config.getOperationFile();
+        urlParameters += "&batch_size=" + config.getBatchSize();
+        urlParameters += "&servers=";
+        for (Pair<String, String> s : config.getServers()) urlParameters += s.getKey() + ";";
+        urlParameters += "&capacities=";
+        for (ServerInterface s : serverStubs) urlParameters += s.getCapacity() + ";";
+        urlParameters += "&malice=";
+        for (ServerInterface s : serverStubs) urlParameters += s.getMaliceValue() + ";";
+        urlParameters += "&result=" + result;
+        urlParameters += "&time=" + totalTime;
+
+        // Send post request
+        con.setDoOutput(true);
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.writeBytes(urlParameters);
+        wr.flush();
+        wr.close();
+
+        int responseCode = con.getResponseCode();
+//        System.out.println("\nSending 'POST' request to URL : " + url);
+//        System.out.println("Post parameters : " + urlParameters);
+//        System.out.println("Response Code : " + responseCode);
+        if (responseCode == 200) {
+            System.out.println("Results were saved");
+        } else {
+            System.out.println("Results could not be saved");
+        }
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        //print result
+        System.out.println(response.toString());
     }
 
     /**

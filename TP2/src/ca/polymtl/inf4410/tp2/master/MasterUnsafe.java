@@ -64,6 +64,11 @@ public class MasterUnsafe extends Master {
         	
         	stopMaster = System.nanoTime();
             System.out.println("Result is " + finalAnwser + " took " +  (stopMaster - startMaster) / 1000000 + " ms");
+            try {
+                saveResults();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

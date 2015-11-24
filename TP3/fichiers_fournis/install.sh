@@ -25,4 +25,4 @@ sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/app-password-confirm pass
 
 sudo apt-get -y install phpmyadmin
 
-sudo service apache2 reload
+sudo service apache2 restart

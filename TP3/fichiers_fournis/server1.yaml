@@ -1,0 +1,55 @@
+#
+# This is a hello world HOT template just defining a single compute
+# server.
+#
+heat_template_version: 2013-05-23
+
+description: >
+  Hello world HOT template that just defines a single server.
+  Contains just base features to verify base HOT support.
+
+parameters:
+  key_name:
+    type: string
+    description: Name of an existing key pair to use for the server
+    default: coupal
+  flavor:
+    type: string
+    description: Flavor for the server to be created
+    default: INF4410-mini
+  image:
+    type: string
+    description: Image ID or image name to use for the server
+    default: INF4410-Ubuntu-trusty-mini
+  private_network:
+    type: string
+    label: Private network name or ID
+    description: Network to attach instance to.
+    default: reseau-pour-tous
+  public_network:
+    type: string
+    label: Public network name or ID
+    description: Network to attach instance to.
+    default: INF4410-05-net
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: key_name }
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - network: { get_param: public_network }
+        - network: { get_param: private_network }
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash
+            wget http://nova.polymtl.ca/~alexrose/inf4410/install.sh -O /tmp/install.sh > /tmp/wget.out 2>&1
+            chmod u+x /tmp/install.sh
+            /tmp/install.sh > /tmp/install.out 2>&1
+
+outputs:
+  server_networks:
+    description: The networks of the deployed server
+    value: { get_attr: [server, networks] }
